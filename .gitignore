@@ -2,5 +2,4 @@ DscBuildOutput/*
 Configurations/*
 Resources/*
 
-
-#!**/README.md
+!**/README.md

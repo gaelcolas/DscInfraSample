@@ -1,0 +1,6 @@
+Name: PRODSRV01
+NodeName: PRODSRV01
+Description: PROD version of SRV01 (PRODSRV01)
+role: Role1
+Location: LON
+ExampleProperty1: 'From Node'

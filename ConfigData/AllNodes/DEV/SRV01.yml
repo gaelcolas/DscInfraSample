@@ -1,0 +1,6 @@
+Name: SRV01
+NodeName: SRV01
+Description: Dev version of SRV01
+role: Role1
+Location: LON
+ExampleProperty1: 'From Node'

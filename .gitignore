@@ -1,2 +1,6 @@
-Configurations/**
-Resources/**
+DscBuildOutput/*
+Configurations/*
+Resources/*
+
+
+#!**/README.md

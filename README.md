@@ -30,6 +30,7 @@ DSCINFRASAMPLE
 │   Dependencies.psd1
 │   README.md
 │   Resources.psd1
+│   RootConfiguration.ps1
 │
 ├───.build
 ├───ConfigData

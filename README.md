@@ -7,7 +7,7 @@ The approach has been heavily inspired by Chef and Puppet.
 ## The abstraction layers
 
 The DSC Framework gives us many options to manage configurations, without much guidance or prescriptive rules to leverage them.
-This repository takes an opinionated approach to Configuration Management leveraging DSC, and for this I extended the vocalubary coming from DSC to define the logical segragation of concerns, for each logical components.
+This repository takes an opinionated approach to Configuration Management leveraging DSC, and for this I extended the vocalubary coming from DSC to define the logical segregation of concerns, for each logical components.
 I especially make a distinction between the DSC Code constructs (such as `DSC Resource`, `DSC Configuration`, `DSC Composite Configuration`, `DSC Composite Resource`) and the logical roles for `Configurations` and `Resources` as I feel the code constructs are too flexible to give away a clear structure by their names.
 
 Based on this new semantics, here's the approach to abstraction I took.

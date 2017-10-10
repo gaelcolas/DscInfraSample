@@ -8,7 +8,7 @@ Param (
     [String]
     $ConfigurationsFolder = "Configurations",
 
-    $Environment = 'DEV',
+    $Environment = $(if ($BR = (&git @('rev-parse', '--abbrev-ref', 'HEAD'))) { $BR } else {'DEV'} ),
 
     [String[]]
     $GalleryRepository, #used in ResolveDependencies, has default

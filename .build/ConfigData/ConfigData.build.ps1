@@ -3,15 +3,15 @@ Param (
     $ProjectPath = (property ProjectPath (Join-Path $PSScriptRoot '../..' -resolve -EA 0)),
     
     [String]
-    $BuildOutput = "DscBuildOutput",
+    $BuildOutput = (property BuildOutput "DscBuildOutput"),
     
     [String]
-    $ResourcesFolder = "Resources",
+    $ResourcesFolder = (property ResourcesFolder "Resources"),
     
     [String]
-    $ConfigurationsFolder = "Configurations",
+    $ConfigurationsFolder =  (property ConfigurationsFolder "Configurations"),
 
-    $Environment = 'DEV'
+    $Environment = (property Environment 'DEV')
 
 )
 

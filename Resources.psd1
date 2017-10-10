@@ -3,11 +3,13 @@
     
     PSDependOptions = @{
         AddToPath = $True
+        Target = 'resources'
         Parameters = @{
             #Force = $True
             #Import = $True
         }
     }
 
-    xCertificate = '3.0.0.0'
+    'gaelcolas/chocolatey' = 'master'
+    #xCertificate = '3.0.0.0'
 }

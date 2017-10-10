@@ -1,9 +1,6 @@
 Configurations:
-  - Base1
-  - Config1
+  - Shared1
 
-Base1:
-  BaseParam1: This is my Datum in Role
-
-Config1:
-  Config1Param1: This is Config1 datum in Role override
+Shared1:
+  DestinationPath: C:\MyRoleParam.txt
+  Param1: This is the Role override!

@@ -1,4 +1,5 @@
 DscBuildOutput/*
+BuildOutput/*
 Configurations/*
 Resources/*
 

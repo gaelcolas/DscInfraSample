@@ -39,8 +39,20 @@ Process {
             . $_.FullName 
         }
     
+    if ($Env:PSModulePath -notcontains $PSScriptRoot) {
+        $Env:PSModulePath += ';'+"$PSScriptRoot\$BuildOutput;"+"$PSSCriptRoot\$BuildOutput\modules"
+    }
 
-    task . DscCleanOutput
+    
+    task . DscCleanOutput,test,LoadResource,LoadConfigurations,loadConfigData
+
+    task LoadResource {
+        Invoke-PSDepend -Path .\Resources.psd1 -Confirm:$False
+    }
+
+    task LoadConfigurations {
+        Invoke-PSDepend -Path .\Configurations.psd1 -Confirm:$False
+    }
 
     task DscCleanOutput {
         Get-ChildItem -Path "$BuildOutput" -Recurse | Remove-Item -force -Recurse -Exclude README.md
@@ -55,7 +67,9 @@ Process {
     }
     
 
-    task test {}
+    task test {
+        Write-Host (Get-Module Datum,DscBuildHelpers,Pester,PSSscriptAnalyser,PSDeploy -ListAvailable | FT -a | Out-String) 
+    }
 
 }
 

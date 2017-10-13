@@ -25,15 +25,25 @@ Based on this new semantics, here's the approach to abstraction I took.
 DSCINFRASAMPLE
 │   .Build.ps1
 │   .gitignore
-│   Configurations.psd1
-│   Datum.yml
-│   Dependencies.psd1
+│   LICENSE
+│   PSDepend.build.psd1
+│   PSDepend.configurations.psd1
+│   PSDepend.resources.psd1
 │   README.md
-│   Resources.psd1
 │   RootConfiguration.ps1
 │
 ├───.build
-├───ConfigData
+│
+├───BuildOutput
+│   ├───modules
+│   └───MOF
+│
+├───docs
+│       README.md
+│
+├───DSC_ConfigData
+│   │   Datum.yml
+│   │
 │   ├───AllNodes
 │   │   ├───DEV
 │   │   │       SRV01.yml
@@ -49,16 +59,11 @@ DSCINFRASAMPLE
 │   │       Role1.yml
 │   │
 │   └───SiteData
+│           KUL.yml
 │           LON.yml
 │
-├───Configurations
-│       README.md
-│
-├───DscBuildOutput
-│       README.md
-│
-└───Resources
-        README.md
+├───DSC_Configurations
+└───DSC_Resources
 ```
 
 ## Branching

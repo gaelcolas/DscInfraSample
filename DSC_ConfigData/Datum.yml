@@ -2,22 +2,22 @@ DatumStructure:
   - StoreName: AllNodes
     StoreProvider: Datum::File
     StoreOptions:
-      DataDir: "./ConfigData/AllNodes"
+      DataDir: "./AllNodes"
  
   - StoreName: SiteData
     StoreProvider: Datum::File
     StoreOptions:
-      DataDir: "./ConfigData/SiteData"
+      DataDir: "./SiteData"
 
   - StoreName: Environments
     StoreProvider: Datum::File
     StoreOptions:
-      DataDir: "./ConfigData/Environments"
+      DataDir: "./Environments"
 
   - StoreName: Roles
     StoreProvider: Datum::File
     StoreOptions:
-      DataDir: "./ConfigData/Roles"
+      DataDir: "./Roles"
 ### THUMBPRINT ###
 
 ResolutionPrecedence:

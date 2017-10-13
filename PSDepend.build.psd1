@@ -8,7 +8,7 @@
         Target = 'BuildOutput\modules'
         Parameters = @{
             #Force = $True
-            ExtractProject = $true
+            #ExtractProject = $true
         }
     }
 

@@ -21,4 +21,4 @@ configuration "RootConfiguration"
     }
 }
 
-RootConfiguration -ConfigurationData $ConfigurationData -Out ".\DscBuildOutput\MOF\$($Environment)\"
+RootConfiguration -ConfigurationData $ConfigurationData -Out "$BuildRoot\BuildOutput\MOF\$($Environment)\"

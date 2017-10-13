@@ -1,8 +1,13 @@
 DscBuildOutput/*
 BuildOutput/*
+
 Configurations/*
-RequiredConfigurations/*
 Resources/*
+
+DSC_Configurations/*
+DSC_Resources/*
+
+RequiredConfigurations/*
 RequiredResources/*
 
 !**/README.md

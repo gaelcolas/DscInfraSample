@@ -1,12 +1,13 @@
 Param (
+
     [String]
-    $BuildOutput = "DscBuildOutput",
+    $BuildOutput = "BuildOutput",
     
     [String]
-    $ResourcesFolder = "Resources",
+    $ResourcesFolder = "DSC_Resources",
     
     [String]
-    $ConfigurationsFolder = "Configurations",
+    $ConfigurationsFolder = "DSC_Configurations",
 
     $Environment = $(if ($BR = (&git @('rev-parse', '--abbrev-ref', 'HEAD'))) { $BR } else {'DEV'} ),
 
@@ -23,7 +24,11 @@ Param (
     $Tasks,
 
     [switch]
-    $ResolveDependency
+    $ResolveDependency,
+
+    $DscConfigDataFolder = 'DSC_ConfigData',
+
+    $ProjectPath = $BuildRoot
 )
 
 Process {
@@ -33,37 +38,31 @@ Process {
         return
     }
 
+
     Get-ChildItem -Path "$PSScriptRoot/.build/" -Recurse -Include *.ps1 -Verbose |
         Foreach-Object {
             "Importing file $($_.BaseName)" | Write-Verbose
             . $_.FullName 
         }
-    
-    if ($Env:PSModulePath -notcontains $PSScriptRoot) {
-        $Env:PSModulePath += ';'+"$PSScriptRoot\$BuildOutput;"+"$PSSCriptRoot\$BuildOutput\modules"
-    }
+    Write-Host $ConfigurationsFolder
 
-    
     #task . DscCleanOutput,test,loadConfigData
-    task . DscCleanOutput,test,LoadResource,LoadConfigurations,loadConfigData
-
+    task . Clean,PSModulePath_BuildModules,test,LoadResource,LoadConfigurations,loadConfigData
+    $ConfigurationPath = Join-Path $ProjectPath $ConfigurationsFolder
+    $ResourcePath = Join-Path $ProjectPath $ResourcesFolder
 
     task LoadResource {
         $PSDependResourceDefinition = '.\PSDepend.resources.psd1'
         if(Test-Path $PSDependResourceDefinition) {
-            Invoke-PSDepend -Path $PSDependResourceDefinition -Confirm:$False
+            Invoke-PSDepend -Path $PSDependResourceDefinition -Confirm:$False -Target $ResourcePath
         }
     }
 
     task LoadConfigurations {
         $PSDependConfigurationDefinition = '.\PSDepend.configurations.psd1'
         if(Test-Path $PSDependConfigurationDefinition) {
-            Invoke-PSDepend -Path $PSDependConfigurationDefinition -Confirm:$False
+            Invoke-PSDepend -Path $PSDependConfigurationDefinition -Confirm:$False -Target $ConfigurationPath
         }
-    }
-
-    task DscCleanOutput {
-        Get-ChildItem -Path "$BuildOutput" -Recurse | Remove-Item -force -Recurse -Exclude README.md
     }
 
     task DscCleanResourcesFolder {

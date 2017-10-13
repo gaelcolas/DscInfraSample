@@ -9,5 +9,5 @@
         }
     }
 
-    'gaelcolas/sharedDscConfig' = 'composite'
+    'gaelcolas/sharedDscConfig' = 'master'
 }

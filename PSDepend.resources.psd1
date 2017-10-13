@@ -11,5 +11,4 @@
     }
 
     'gaelcolas/chocolatey' = 'master'
-    #xCertificate = '3.0.0.0'
 }

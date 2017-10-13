@@ -2,5 +2,6 @@ DscBuildOutput/*
 BuildOutput/*
 Configurations/*
 Resources/*
+RequiredResources/*
 
 !**/README.md

@@ -44,14 +44,22 @@ Process {
     }
 
     
+    #task . DscCleanOutput,test,loadConfigData
     task . DscCleanOutput,test,LoadResource,LoadConfigurations,loadConfigData
 
+
     task LoadResource {
-        Invoke-PSDepend -Path .\Resources.psd1 -Confirm:$False
+        $PSDependResourceDefinition = '.\PSDepend.resources.psd1'
+        if(Test-Path $PSDependResourceDefinition) {
+            Invoke-PSDepend -Path $PSDependResourceDefinition -Confirm:$False
+        }
     }
 
     task LoadConfigurations {
-        Invoke-PSDepend -Path .\Configurations.psd1 -Confirm:$False
+        $PSDependConfigurationDefinition = '.\PSDepend.configurations.psd1'
+        if(Test-Path $PSDependConfigurationDefinition) {
+            Invoke-PSDepend -Path $PSDependConfigurationDefinition -Confirm:$False
+        }
     }
 
     task DscCleanOutput {
@@ -109,7 +117,7 @@ begin {
 
         $PSDependParams = @{
             Force = $true
-            Path = "$PSScriptRoot\Dependencies.psd1"
+            Path = "$PSScriptRoot\PSDepend.build.psd1"
         }
         if($PSBoundParameters.ContainsKey('verbose')) { $PSDependParams.add('verbose',$verbose)}
         Invoke-PSDepend @PSDependParams

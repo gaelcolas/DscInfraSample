@@ -1,6 +1,7 @@
 DscBuildOutput/*
 BuildOutput/*
 Configurations/*
+RequiredConfigurations/*
 Resources/*
 RequiredResources/*
 

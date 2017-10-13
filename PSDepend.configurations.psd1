@@ -2,7 +2,7 @@
     # Set up a mini virtual environment...
     PSDependOptions = @{
         AddToPath = $True
-        Target = 'Configurations'
+        Target = 'RequiredConfigurations'
         Parameters = @{
             #Force = $True
             #Import = $True

@@ -20,7 +20,7 @@ task Clean {
     }
     if (Test-Path $BuildOutput) {
         "Removing $BuildOutput\*"
-        Gci .\BuildOutput\ -Exclude modules | Remove-Item -Force -Recurse
+        Gci .\BuildOutput\ -Exclude modules,README.md | Remove-Item -Force -Recurse
     }
 
 }

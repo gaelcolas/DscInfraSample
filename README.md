@@ -1,13 +1,21 @@
 # DSC Repository Sample
 
-This repository is an example of an implementation of DSC driven by a hierarchical configuration data store.
+This repository is an example of an Infrastructure, represented as code, leveraging DSC, and driven by a hierarchical data store, based on a file provider.
 
 The approach has been heavily inspired by Chef and Puppet.
 
+The Abstraction Layers
+The Desired Infrastructure repository
+The Repository Structures
+The Branching Strategy
+
+------------------------------------------------------
+
 ## The abstraction layers
 
+
 The DSC Framework gives us many options to manage configurations, without much guidance or prescriptive rules to leverage them.
-This repository takes an opinionated approach to Configuration Management leveraging DSC, and for this I extended the vocalubary coming from DSC to define the logical segregation of concerns, for each logical components.
+This repository takes an opinionated approach to Configuration Management leveraging DSC, and for this I extended the vocalubary coming from DSC to define the logical separation of concerns, for each logical components.
 I especially make a distinction between the DSC Code constructs (such as `DSC Resource`, `DSC Configuration`, `DSC Composite Configuration`, `DSC Composite Resource`) and the logical roles for `Configurations` and `Resources` as I feel the code constructs are too flexible to give away a clear structure by their names.
 
 Based on this new semantics, here's the approach to abstraction I took.
@@ -18,6 +26,14 @@ Based on this new semantics, here's the approach to abstraction I took.
 4. DSC Resources abstract a PowerShell Modules' functions
 5. PS Modules functions abstract the underlying technology
 
+## The Desired Infrastructure repository
+
+An Infrastructure represented as code with DSC could look like this repository. It is inspired by Puppet's R10K, and allows to separate staging environments via git branches so that successful changes can be promoted through each environment, while keeping the infra consistent (more on this later).
+
+The main principles this module follow are the followings:
+- This is a repository that stores and organises the Infrastructure policies (Roles and Managed objects definitions. i.e. Nodes)
+- Those policy documents can be seen as artifacts, versioned, and promoted through rings, excepts for Nodes which are assigned per environments.
+- The Code constructs (Resource and Configurations) are not included in this repository (so they can be tested and developped individually, decoupled from the overall infra), but their specific artifacts' reference (i.e. Released module, Module Git repository in specific branch or at specific commit).
 
 ## Repository Structure
 
@@ -66,11 +82,11 @@ DSCINFRASAMPLE
 └───DSC_Resources
 ```
 
-## Branching
+## Using Branching strategies for Staging rings
 
-I believe all changes should be _individually_ tested (similar to unit testing) and versioned into _immutable_ artefacts, before testing those immutable units in 'real' conditions, and promoting them to the next _ring_.
+I believe all changes should be tested and versioned, having tests giving you quick feedback before the change is applied, and promoting them to the next _ring_ for staged release.
 
-In Infrastructure, and especially in this context of Infrastructure as code, that means a code change will be tested in a Dev environment, before being promoted into Staging, to finally going to Prod (name, number of rings, and _gates_ may vary).
+In this context of Infrastructure as code, that means a code change will be tested in a Dev environment, before being promoted into Staging, to finally going to Prod (name, number of rings, and _gates_ may vary).
 
 The best way I found to handle this workflow is leveraging branching in git, in a similar way to R10k for the puppeters.
 

@@ -48,6 +48,7 @@ Process {
 
     #task . DscCleanOutput,test,loadConfigData
     task . Clean,PSModulePath_BuildModules,test,LoadResource,LoadConfigurations,loadConfigData
+    
     $ConfigurationPath = Join-Path $ProjectPath $ConfigurationsFolder
     $ResourcePath = Join-Path $ProjectPath $ResourcesFolder
 

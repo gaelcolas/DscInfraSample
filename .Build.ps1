@@ -49,7 +49,7 @@ Process {
     Write-Host $ConfigurationsFolder
 
     #task . DscCleanOutput,test,loadConfigData
-    task . Clean,PSModulePath_BuildModules,test,LoadResource,LoadConfigurations,loadConfigData
+    task . Clean,PSModulePath_BuildModules,test,LoadResource,LoadConfigurations,loadConfigData,PackageModuleForPull
     
     $ConfigurationPath = Join-Path $ProjectPath $ConfigurationsFolder
     $ResourcePath = Join-Path $ProjectPath $ResourcesFolder
@@ -74,6 +74,10 @@ Process {
 
     task DscCleanConfigurationsFolder {
         Get-ChildItem -Path "$ConfigurationsFolder" -Recurse | Remove-Item -force -Recurse -Exclude README.md
+    }
+
+    task PackageModuleForPull {
+        Get-ModuleFromfolder -ModuleFolder (Join-Path $ProjectPath $ResourcesFolder) | Compress-DscResourceModule -DscBuildOutputModules (Join-Path $BuildOutput 'DscModules')
     }
     
 

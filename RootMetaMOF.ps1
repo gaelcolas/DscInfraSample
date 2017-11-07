@@ -1,10 +1,8 @@
 [DscLocalConfigurationManager()]
 Configuration RootMetaMOF {
     Node $ConfigurationData.AllNodes.Nodename {
-        Write-Warning ($node|FT|out-string)
         
         $LcmConfig = $(Lookup $Node 'LCM_Config\Settings' $Null -verbose -debug)
-        Write-Warning ($LcmConfig|FL|out-string)
         #If the Nodename is a GUID, use Config ID instead Named config, as per SMB Pull requirements
         if($Node.Nodename -as [Guid]) {$LcmConfig['ConfigurationID'] = $Node.Nodename}
         x Settings '' $LcmConfig

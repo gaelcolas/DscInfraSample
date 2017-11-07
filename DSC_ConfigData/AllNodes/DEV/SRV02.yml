@@ -1,6 +1,12 @@
 Name: SRV02
-NodeName: e5a65f3b-6084-45bc-8ab7-aac003c79fe0
+NodeName: SRV02
 Description: Dev version of SRV01
 role: Role1
 Location: LON
 ExampleProperty1: 'From Node'
+
+LCM_Config:
+  Settings:
+    RefreshMode: Push
+    RefreshFrequencyMins: 30
+    RebootNodeIfNeeded: true

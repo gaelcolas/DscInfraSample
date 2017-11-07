@@ -21,9 +21,9 @@ DatumStructure:
 ### THUMBPRINT ###
 
 ResolutionPrecedence:
-  - 'AllNodes\$($Node.Environnent)\$($Node.Name)'
-  - 'AllNodes\$($Node.Environnent)\<%= $CurrentNode.PSObject.Properties.where{$_.Name -eq $Node.Name}.Value%>\Roles' #script block execution
-  - 'AllNodes\$($Node.Environnent)\All\Roles'
+  - 'AllNodes\$($Node.Name)'
+  - 'AllNodes\<%= $CurrentNode.PSObject.Properties.where{$_.Name -eq $Node.Name}.Value%>\Roles' #script block execution
+  - 'AllNodes\All\Roles'
   - 'SiteData\$($Node.Location)'
   - 'SiteData\$($Node.Location)\Roles' #variable expansion
   - 'SiteData\All'

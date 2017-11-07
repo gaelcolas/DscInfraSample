@@ -53,19 +53,19 @@ Task LoadConfigData {
         $Env:PSModulePath += ';'+$resourcePath
     }
 
-    $Yml = Get-Content -raw (Join-Path $ConfigDataPath 'Datum.yml') | ConvertFrom-Yaml
+    $Global:Yml = Get-Content -raw (Join-Path $ConfigDataPath 'Datum.yml') | ConvertFrom-Yaml
 
     $Global:Datum = New-DatumStructure $Yml
 
     $Global:ConfigurationData = @{
-        AllNodes = @($Global:Datum.ALlNodes.($Environment).psobject.Properties | % { $Datum.AllNodes.($Environment).($_.Name) })
+        AllNodes = @($Global:Datum.AllNodes.($Environment).psobject.Properties | % { $Datum.AllNodes.($Environment).($_.Name) })
         Datum = $Global:Datum
     }
 
-    $Node = $ConfigurationData.AllNodes[0]
-    Write-warning (Lookup $Node 'Configurations' -verbose)
+   . (Join-path $ProjectPath 'RootConfiguration.ps1')
 
-    . (Join-path $ProjectPath 'RootConfiguration.ps1')
-
+    . (Join-path $ProjectPath 'RootMetaMof.ps1')
+    RootMetaMOF -ConfigurationData $ConfigurationData -outputPath (Join-Path $BuildOutput 'MetaMof')
+    New-DscChecksum -Path (Join-Path $BuildOutput MOF) -verbose:$false
     Pop-Location
 }

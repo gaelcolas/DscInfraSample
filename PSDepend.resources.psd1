@@ -3,7 +3,7 @@
     
     PSDependOptions = @{
         AddToPath = $True
-        Target = 'RequiredResources'
+        Target = 'DSC_Resources'
         Parameters = @{
             #Force = $True
             #Import = $True

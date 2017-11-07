@@ -5,11 +5,14 @@ Param (
     
     [String]
     $ResourcesFolder = "DSC_Resources",
+
+    [string]
+    $DscConfigDataFolder = 'DSC_ConfigData',
     
     [String]
     $ConfigurationsFolder = "DSC_Configurations",
 
-    $Environment = $(if ($BR = (&git @('rev-parse', '--abbrev-ref', 'HEAD'))) { $BR } else {'DEV'} ),
+    $Environment = $(if ($BR = (&git @('rev-parse', '--abbrev-ref', 'HEAD')) -and (Test-Path ".\$DscConfigDataFolder\AllNodes\$BR")) { $BR } else {'DEV'} ),
 
     [String[]]
     $GalleryRepository, #used in ResolveDependencies, has default
@@ -26,7 +29,6 @@ Param (
     [switch]
     $ResolveDependency,
 
-    $DscConfigDataFolder = 'DSC_ConfigData',
 
     $ProjectPath = $BuildRoot
 )
@@ -48,6 +50,7 @@ Process {
 
     #task . DscCleanOutput,test,loadConfigData
     task . Clean,PSModulePath_BuildModules,test,LoadResource,LoadConfigurations,loadConfigData
+    
     $ConfigurationPath = Join-Path $ProjectPath $ConfigurationsFolder
     $ResourcePath = Join-Path $ProjectPath $ResourcesFolder
 

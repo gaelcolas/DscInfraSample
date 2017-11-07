@@ -11,9 +11,8 @@ configuration "RootConfiguration"
 
         (Lookup $Node 'Configurations') | % {
             $ConfigurationName = $_
-            $(Write-Warning "Looking up $ConfigurationName")
+            $(Write-Warning "Looking up params for $ConfigurationName")
             $Properties = $(lookup $Node $ConfigurationName -Verbose -DefaultValue @{})
-            $(Write-Warning "Including $($Properties | Convertto-json)")
             #x $ConfigurationName $ConfigurationName $Properties
             Get-DscSplattedResource -ResourceName $ConfigurationName -ExecutionName $ConfigurationName -Properties $Properties
         }

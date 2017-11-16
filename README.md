@@ -4,10 +4,11 @@ This repository is an example of an Infrastructure, represented as code, leverag
 
 The approach has been heavily inspired by Chef and Puppet.
 
-The Abstraction Layers
-The Desired Infrastructure repository
-The Repository Structures
-The Branching Strategy
+1. [The Abstraction Layers](#The-abstraction-layers)
+2. [The Desired Infrastructure repository](#The-Desired-Infrastructure-repository)
+3. [The Repository Structures](#Repository-Structure)
+4. [The Branching Strategy](#Using-Branching-strategies-for-Staging-rings)
+
 
 ------------------------------------------------------
 
@@ -15,12 +16,12 @@ The Branching Strategy
 
 
 The DSC Framework gives us many options to manage configurations, without much guidance or prescriptive rules to leverage them.
-This repository takes an opinionated approach to Configuration Management leveraging DSC, and for this I extended the vocalubary coming from DSC to define the logical separation of concerns, for each logical components.
+This repository takes an **opinionated** approach to Configuration Management leveraging **DSC**, and for this I _extended_ the vocalubary coming from DSC to define the logical separation of concerns, for each logical components.
 I especially make a distinction between the DSC Code constructs (such as `DSC Resource`, `DSC Configuration`, `DSC Composite Configuration`, `DSC Composite Resource`) and the logical roles for `Configurations` and `Resources` as I feel the code constructs are too flexible to give away a clear structure by their names.
 
 Based on this new semantics, here's the approach to abstraction I took.
 
-1. Role abstracts Configurations
+1. [Role](./DSC_ConfigData/README.md) abstracts [Configurations](./DSC_Configurations/README.md)
 2. Configuration abstracts resources
 3. Datum abstracts Configuration Data
 4. DSC Resources abstract a PowerShell Modules' functions
@@ -28,7 +29,7 @@ Based on this new semantics, here's the approach to abstraction I took.
 
 ## The Desired Infrastructure repository
 
-An Infrastructure represented as code with DSC could look like this repository. It is inspired by Puppet's R10K, and allows to separate staging environments via git branches so that successful changes can be promoted through each environment, while keeping the infra consistent (more on this later).
+An Infrastructure represented as code with DSC could look like this repository. It is inspired by Puppet's R10K and Hiera, and allows to separate staging environments via git branches so that successful changes can be promoted through each environment, while keeping the infra consistent (more on this later).
 
 The main principles this module follow are the followings:
 - This is a repository that stores and organises the Infrastructure policies (Roles and Managed objects definitions. i.e. Nodes)

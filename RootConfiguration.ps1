@@ -5,7 +5,8 @@ configuration "RootConfiguration"
     Import-DscResource -ModuleName PSDesiredStateConfiguration
 
     #That Module is a configuration, should be defined in Configuration.psd1
-    Import-DscResource -ModuleName SharedDscConfig -ModuleVersion 0.0.2
+    Import-DscResource -ModuleName SharedDscConfig -ModuleVersion 0.0.3
+    Import-DscResource -ModuleName Chocolatey -ModuleVersion 0.0.31
 
     node $ConfigurationData.AllNodes.NodeName {
 
@@ -20,4 +21,4 @@ configuration "RootConfiguration"
     }
 }
 
-RootConfiguration -ConfigurationData $ConfigurationData -Out "$BuildRoot\BuildOutput\MOF\$($Environment)\"
+RootConfiguration -ConfigurationData $ConfigurationData -Out "$BuildRoot\BuildOutput\MOF\"

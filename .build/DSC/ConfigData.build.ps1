@@ -56,9 +56,18 @@ Task LoadConfigData {
     $Global:Yml = Get-Content -raw (Join-Path $ConfigDataPath 'Datum.yml') | ConvertFrom-Yaml
 
     $Global:Datum = New-DatumStructure $Yml
+    
+    $AllNodes = @($Global:Datum.AllNodes.($Environment).psobject.Properties | % { 
+                    $Node = $Datum.AllNodes.($Environment).($_.Name)
+                    $null = $Node.Add('Environment',$Environment)
+                    if(!$Node.containsKey('Name') ) {
+                        $null = $Node.Add('Name',$_.Name)
+                    }
+                    $Node
+                })
 
     $Global:ConfigurationData = @{
-        AllNodes = @($Global:Datum.AllNodes.($Environment).psobject.Properties | % { $Datum.AllNodes.($Environment).($_.Name) })
+        AllNodes = $AllNodes
         Datum = $Global:Datum
     }
 

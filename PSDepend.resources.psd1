@@ -10,5 +10,5 @@
         }
     }
 
-    'gaelcolas/chocolatey' = 'master'
+    chocolatey = 'latest'
 }

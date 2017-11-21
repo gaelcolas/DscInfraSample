@@ -21,13 +21,10 @@ DatumStructure:
 ### THUMBPRINT ###
 
 ResolutionPrecedence:
-  - 'AllNodes\$($Node.Name)'
-  - 'AllNodes\<%= $CurrentNode.PSObject.Properties.where{$_.Name -eq $Node.Name}.Value%>\Roles' #script block execution
-  - 'AllNodes\All\Roles'
+  - 'AllNodes\$($Node.Environment)\$($Node.Name)'
   - 'SiteData\$($Node.Location)'
   - 'SiteData\$($Node.Location)\Roles' #variable expansion
-  - 'SiteData\All'
-  - 'SiteData\All\Roles'
-  - 'Roles'
   - 'Roles\$($Node.Role)' #if Node has unique role, otherwise use <%= $CurrentNode.PSObject.Properties.where{$_.Name -in $Node.Role}.Value %>
   - 'Roles\All'
+#  - 'AllNodes\<%= $CurrentNode.PSObject.Properties.where{$_.Name -eq $Node.Name}.Value%>\Roles' #script block execution
+#  - 'AllNodes\All\Roles'

@@ -1,4 +1,3 @@
-Name: SRV02
 NodeName: SRV02
 Description: Dev version of SRV01
 role: WindowsBase

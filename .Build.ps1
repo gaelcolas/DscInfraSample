@@ -49,7 +49,7 @@ Process {
     Write-Host $ConfigurationsFolder
 
     #task . DscCleanOutput,test,loadConfigData
-    task . Clean,PSModulePath_BuildModules,test,LoadResource,LoadConfigurations,loadConfigData,PackageModuleForPull
+    task . Clean,PSModulePath_BuildModules,test,LoadResource,LoadConfigurations,CompileDSCWithDatum,PackageModuleForPull
     
     $ConfigurationPath = Join-Path $ProjectPath $ConfigurationsFolder
     $ResourcePath = Join-Path $ProjectPath $ResourcesFolder

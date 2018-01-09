@@ -18,5 +18,6 @@
     PSScriptAnalyzer = 'latest'
     psdeploy = 'latest'
     'gaelcolas/DscBuildHelpers' = 'master'
-    'gaelcolas/Datum' = 'master'
+    Datum = 'latest'
+    'powershell-yaml' = 'latest'
 }

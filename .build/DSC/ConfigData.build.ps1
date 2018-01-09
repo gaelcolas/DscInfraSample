@@ -31,50 +31,56 @@ Param (
         }
     }
 
-Task LoadConfigData {
-    if ( ![io.path]::IsPathRooted($BuildOutput) ) {
-        $BuildOutput = Join-Path $ProjectPath -ChildPath $BuildOutput
-    }
+    Task CompileDSCWithDatum LoadDatumConfigData, CompileRootConfiguration, CompileRootMetaMof, CreateChecksums
 
-    $ConfigDataPath = Join-Path $ProjectPath $DscConfigDataFolder
+    Task LoadDatumConfigData {
+        if ( ![io.path]::IsPathRooted($BuildOutput) ) {
+            $BuildOutput = Join-Path $ProjectPath -ChildPath $BuildOutput
+        }
 
-    Push-Location $ConfigDataPath
-    Import-Module PowerShell-Yaml -scope Global
-    Import-Module Datum -Force -Scope Global
+        $ConfigDataPath = Join-Path $ProjectPath $DscConfigDataFolder
 
-    $ConfigurationPath = Join-Path $ProjectPath $ConfigurationsFolder
-    $ResourcePath = Join-Path $ProjectPath $ResourcesFolder
+        Import-Module PowerShell-Yaml -scope Global
+        Import-Module Datum -Force -Scope Global
 
-    if($ConfigurationPath -notin ($Env:PSModulePath -split ';')) {
-        $Env:PSModulePath += ';'+$ConfigurationPath
-    }
+        $ConfigurationPath = Join-Path $ProjectPath $ConfigurationsFolder
+        $ResourcePath = Join-Path $ProjectPath $ResourcesFolder
 
-    if($ResourcePath -notin ($Env:PSModulePath -split ';')) {
-        $Env:PSModulePath += ';'+$resourcePath
-    }
+        if($ConfigurationPath -notin ($Env:PSModulePath -split ';')) {
+            $Env:PSModulePath += ';'+$ConfigurationPath
+        }
 
-    $Global:Yml = Get-Content -raw (Join-Path $ConfigDataPath 'Datum.yml') | ConvertFrom-Yaml
-
-    $Global:Datum = New-DatumStructure $Yml
-    
-    $AllNodes = @($Global:Datum.AllNodes.($Environment).psobject.Properties | % { 
-                    $Node = $Datum.AllNodes.($Environment).($_.Name)
-                    $null = $Node.Add('Environment',$Environment)
-                    if(!$Node.containsKey('Name') ) {
-                        $null = $Node.Add('Name',$_.Name)
-                    }
-                    $Node
-                })
+        if($ResourcePath -notin ($Env:PSModulePath -split ';')) {
+            $Env:PSModulePath += ';'+$resourcePath
+        }
+        $DatumDefinitionFile = Join-Path -Resolve $ConfigDataPath 'Datum.yml'
+        $Global:Datum = New-DatumStructure -DefinitionFile $DatumDefinitionFile
+        
+        $AllNodes = @($Datum.AllNodes.($Environment).psobject.Properties | ForEach-Object { 
+        $Node = $Datum.AllNodes.($Environment).($_.Name)
+        $null = $Node.Add('Environment',$Environment)
+        if(!$Node.contains('Name') ) {
+            $null = $Node.Add('Name',$_.Name)
+        }
+        (@{} + $Node)
+    })
 
     $Global:ConfigurationData = @{
         AllNodes = $AllNodes
         Datum = $Global:Datum
     }
+}
 
-   . (Join-path $ProjectPath 'RootConfiguration.ps1')
+task CompileRootConfiguration {
+    . (Join-path $ProjectPath 'RootConfiguration.ps1')
+}
 
+task CompileRootMetaMof {
     . (Join-path $ProjectPath 'RootMetaMof.ps1')
     RootMetaMOF -ConfigurationData $ConfigurationData -outputPath (Join-Path $BuildOutput 'MetaMof')
+}
+
+task CreateChecksums {
+    Import-Module DscBuildHelpers -Scope Global
     New-DscChecksum -Path (Join-Path $BuildOutput MOF) -verbose:$false
-    Pop-Location
 }

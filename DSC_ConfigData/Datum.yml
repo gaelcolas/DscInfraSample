@@ -2,26 +2,27 @@ DatumStructure:
   - StoreName: AllNodes
     StoreProvider: Datum::File
     StoreOptions:
-      DataDir: "./AllNodes"
+      Path: "./AllNodes"
  
   - StoreName: SiteData
     StoreProvider: Datum::File
     StoreOptions:
-      DataDir: "./SiteData"
+      Path: "./SiteData"
 
   - StoreName: Environments
     StoreProvider: Datum::File
     StoreOptions:
-      DataDir: "./Environments"
+      Path: "./Environments"
 
   - StoreName: Roles
     StoreProvider: Datum::File
     StoreOptions:
-      DataDir: "./Roles"
+      Path: "./Roles"
 ### THUMBPRINT ###
 
 ResolutionPrecedence:
   - 'AllNodes\$($Node.Environment)\$($Node.Name)'
+  - 'Environments\$($Node.Environment)'
   - 'SiteData\$($Node.Location)'
   - 'SiteData\$($Node.Location)\Roles' #variable expansion
   - 'Roles\$($Node.Role)' #if Node has unique role, otherwise use <%= $CurrentNode.PSObject.Properties.where{$_.Name -in $Node.Role}.Value %>

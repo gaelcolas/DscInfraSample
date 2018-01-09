@@ -1,4 +1,5 @@
 Write-Warning "---------->> Starting Configuration"
+$BuildVersion = $Env:BuildVersion
 
 configuration "RootConfiguration"
 {
@@ -6,18 +7,19 @@ configuration "RootConfiguration"
 
     #That Module is a configuration, should be defined in Configuration.psd1
     Import-DscResource -ModuleName SharedDscConfig -ModuleVersion 0.0.3
-    Import-DscResource -ModuleName Chocolatey -ModuleVersion 0.0.31
+    Import-DscResource -ModuleName Chocolatey -ModuleVersion 0.0.46
+
+    $module = Get-Module PSDesiredStateConfiguration
+    $null = & $module {param($tag) Set-PSTopConfigurationName "MOF_$($tag)"} "$BuildVersion"
 
     node $ConfigurationData.AllNodes.NodeName {
-
-        (Lookup $Node 'Configurations') | % {
+        $(Write-Warning "Processing Node $($Node.Name) : $($Node.nodeName)")
+        (Lookup 'Configurations').Foreach{
             $ConfigurationName = $_
-            $(Write-Warning "Looking up params for $ConfigurationName")
-            $Properties = $(lookup $Node $ConfigurationName -Verbose -DefaultValue @{})
-            #x $ConfigurationName $ConfigurationName $Properties
+            $(Write-Warning "`tLooking up params for $ConfigurationName")
+            $Properties = $(lookup $ConfigurationName -DefaultValue @{})
             Get-DscSplattedResource -ResourceName $ConfigurationName -ExecutionName $ConfigurationName -Properties $Properties
         }
-        #>
     }
 }
 

@@ -11,3 +11,5 @@ RequiredConfigurations/*
 RequiredResources/*
 
 !**/README.md
+
+**.mp4

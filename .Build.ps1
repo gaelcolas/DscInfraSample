@@ -88,6 +88,7 @@ Process {
 }
 
 begin {
+    [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
     function Resolve-Dependency {
         [CmdletBinding()]
         param()

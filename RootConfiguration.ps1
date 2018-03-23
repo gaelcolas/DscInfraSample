@@ -6,8 +6,8 @@ configuration "RootConfiguration"
     Import-DscResource -ModuleName PSDesiredStateConfiguration
 
     #That Module is a configuration, should be defined in Configuration.psd1
-    Import-DscResource -ModuleName SharedDscConfig -ModuleVersion 0.0.3
-    Import-DscResource -ModuleName Chocolatey -ModuleVersion 0.0.46
+    Import-DscResource -ModuleName SharedDscConfig -ModuleVersion 0.0.4
+    Import-DscResource -ModuleName Chocolatey -ModuleVersion 0.0.48
 
     $module = Get-Module PSDesiredStateConfiguration
     $null = & $module {param($tag) Set-PSTopConfigurationName "MOF_$($tag)"} "$BuildVersion"

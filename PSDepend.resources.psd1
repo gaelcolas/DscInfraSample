@@ -10,5 +10,5 @@
         }
     }
 
-    chocolatey = 'latest'
+    chocolatey = '0.0.48'
 }

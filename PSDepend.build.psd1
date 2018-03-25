@@ -21,5 +21,6 @@
     xDscResourceDesigner = 'latest'
     'gaelcolas/DscBuildHelpers' = 'master'
     Datum = 'latest'
+    ProtectedData = 'latest'
     'powershell-yaml' = 'latest'
 }

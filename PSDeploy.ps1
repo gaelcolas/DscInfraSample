@@ -4,13 +4,13 @@ if($Env:BuildSystems -eq 'AppVeyor' -and $Env:BranchName -in @('DEV','PROD')) {
 elseif($Env:USERDOMAIN -eq 'CONTOSO' -and $Env:BranchName -in @('DEV','PROD')) {
     # How you can move MOFs and Zipped modules for DSC PULL to a file share
     Deploy DeployMofs {
-        ByFileSystem {
+        By FileSystem {
             FromSource 'BuildOutput\MOF'
             To '\\contoso\dfs\DSC\MOF'
         }
     }
     Deploy DeployMofs {
-        ByFileSystem {
+        By FileSystem {
             FromSource 'BuildOutput\DscModules'
             To '\\contoso\dfs\DSC\DscModules'
         }

@@ -5,8 +5,6 @@ Import-Module DscBuildHelpers -Scope Global
 configuration "RootConfiguration"
 {
     Import-DscResource -ModuleName PSDesiredStateConfiguration
-
-    #That Module is a configuration, should be defined in Configuration.psd1
     Import-DscResource -ModuleName SharedDscConfig -ModuleVersion 0.0.4
     Import-DscResource -ModuleName Chocolatey -ModuleVersion 0.0.58
 
@@ -14,12 +12,45 @@ configuration "RootConfiguration"
     $null = & $module {param($tag) $PSTopConfigurationName = "MOF_$($tag)" } "$BuildVersion"
 
     node $ConfigurationData.AllNodes.NodeName {
-        $(Write-Warning "Processing Node $($Node.Name) : $($Node.nodeName)")
+        Write-Host "`r`n$('-'*75)`r`n$($Node.Name) : $($Node.NodeName) : $(&$module { Get-PSTopConfigurationName })" -ForegroundColor Yellow
+        $Env:PSModulePath = $goodPSModulePath
         (Lookup 'Configurations').Foreach{
             $ConfigurationName = $_
-            $(Write-Warning "`tLooking up params for $ConfigurationName")
+            $(Write-Debug "`tLooking up params for $ConfigurationName")
             $Properties = $(lookup $ConfigurationName -DefaultValue @{})
+            $DscError = [System.Collections.ArrayList]::new()
             Get-DscSplattedResource -ResourceName $ConfigurationName -ExecutionName $ConfigurationName -Properties $Properties
+            $(
+                if($Error[0] -and $LastError -ne $Error[0]) {
+                    $LastIndex = [Math]::Max( ($Error.LastIndexOf($LastError) -1), -1)
+                    if($LastIndex -gt 0) {
+                        $Error[0..$lastIndex].Foreach{
+                            if($Message = Get-DscErrorMessage -Exception $_) {
+                                $null = $DscError.Add($Message)
+                            }
+                        }
+                    }
+                    else {
+                        if($Message = Get-DscErrorMessage -Exception $Error[0]) {
+                            $null = $DscError.add($Message)
+                        }
+                    }
+                    $lastError = $Error[0]
+                }
+
+                if($DscError.count -gt 0) {
+                    $FailMessage = "    $($Node.Name) : $($Node.Role) ::> $_ "
+                    Write-Host -ForeGroundColor Red ($FailMessage + '.' * (55 - $FailMessage.Length) + 'FAILED')
+                    $DscError.Foreach{
+                        Write-Host -ForeGroundColor Yellow "`t$Message"
+                    }
+                }
+                else {
+                    $OkMessage = "    $($Node.Name) : $($Node.Role) ::> $_ "
+                    Write-Host -ForeGroundColor Green ($OkMessage + '.' * (55 -$OkMessage.Length) + 'OK')
+                }
+                $LastCount = $Error.Count
+            )
         }
     }
 }

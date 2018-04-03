@@ -13,74 +13,77 @@ Param (
 
     $Environment = (property Environment 'DEV'),
 
-    $DscConfigDataFolder = (property DscConfigDataFolder 'DSC_ConfigData')
+    $ConfigDataFolder = (property ConfigDataFolder 'DSC_ConfigData'),
+
+    $FilterNode = (property FilterNode $false),
+
+    $ModuleToLeaveLoaded = (property ModuleToLeaveLoaded @('InvokeBuild','PSReadline','PackageManagement') )
 
 )
     task PSModulePath_BuildModules {
+        if(!([io.path]::isPathRooted($BuildOutput))) {
+            $BuildOutput = Join-Path $ProjectPath $BuildOutput
+        }
+
         $ConfigurationPath = Join-Path $ProjectPath $ConfigurationsFolder
         $ResourcePath = Join-Path $ProjectPath $ResourcesFolder
-        $BuildModulesPath = Join-Path $ProjectPath "$BuildOutput\Modules"
-        if (($Env:PSModulePath -split ';') -notcontains $ResourcePath) {
-            $Env:PSModulePath += ';'+$ResourcePath
-        }
-        if (($Env:PSModulePath -split ';') -notcontains $ConfigurationPath) {
-            $Env:PSModulePath += ';'+$ConfigurationPath
-        }
-        if (($Env:PSModulePath -split ';') -notcontains $BuildModulesPath) {
-            $Env:PSModulePath += ';'+$BuildModulesPath
-        }
+        $BuildModulesPath = Join-Path $BuildOutput 'modules'
+        
+        Set-PSModulePath -ModuleToLeaveLoaded $ModuleToLeaveLoaded -PathsToSet @($ConfigurationPath, $ResourcePath, $BuildModulesPath)
     }
 
-    Task CompileDSCWithDatum LoadDatumConfigData, CompileRootConfiguration, CompileRootMetaMof, CreateChecksums
+    Task Compile_Datum_DSC Load_Datum_ConfigData, Compile_Root_Configuration, compile_root_meta_mof, create_MOF_checksums
 
-    Task LoadDatumConfigData {
+    Task Load_Datum_ConfigData {
         if ( ![io.path]::IsPathRooted($BuildOutput) ) {
             $BuildOutput = Join-Path $ProjectPath -ChildPath $BuildOutput
         }
-
-        $ConfigDataPath = Join-Path $ProjectPath $DscConfigDataFolder
+        $ConfigDataPath    = Join-Path $ProjectPath $ConfigDataFolder
+        $ConfigurationPath = Join-Path $ProjectPath $ConfigurationsFolder
+        $ResourcePath      = Join-Path $ProjectPath $ResourcesFolder
+        $BuildModulesPath  = Join-Path $BuildOutput 'modules'
+        
+        Set-PSModulePath -ModuleToLeaveLoaded $ModuleToLeaveLoaded -PathsToSet @($ConfigurationPath,$ResourcePath,$BuildModulesPath)
 
         Import-Module PowerShell-Yaml -scope Global
         Import-Module Datum -Force -Scope Global
 
-        $ConfigurationPath = Join-Path $ProjectPath $ConfigurationsFolder
-        $ResourcePath = Join-Path $ProjectPath $ResourcesFolder
-
-        if($ConfigurationPath -notin ($Env:PSModulePath -split ';')) {
-            $Env:PSModulePath += ';'+$ConfigurationPath
-        }
-
-        if($ResourcePath -notin ($Env:PSModulePath -split ';')) {
-            $Env:PSModulePath += ';'+$resourcePath
-        }
         $DatumDefinitionFile = Join-Path -Resolve $ConfigDataPath 'Datum.yml'
+        Write-Build Green "Loading Datum Definition from $DatumDefinitionFile"
         $Global:Datum = New-DatumStructure -DefinitionFile $DatumDefinitionFile
         
-        $AllNodes = @($Datum.AllNodes.($Environment).psobject.Properties | ForEach-Object { 
-        $Node = $Datum.AllNodes.($Environment).($_.Name)
-        $null = $Node.Add('Environment',$Environment)
-        if(!$Node.contains('Name') ) {
-            $null = $Node.Add('Name',$_.Name)
-        }
-        (@{} + $Node)
-    })
 
-    $Global:ConfigurationData = @{
-        AllNodes = $AllNodes
-        Datum = $Global:Datum
+        $Global:ConfigurationData = Get-FilteredConfigurationData -Environment $Environment -FilteredNode $FilteredNode -Datum $Datum
+}
+
+task Compile_Root_Configuration {
+    '-----------------------'
+    "FilteredNode: $($FilteredNode -Join ', ')"
+    '-----------------------'
+
+    if($ConfigDataCopy) {
+        $Global:ConfigurationData = $ConfigDataCopy.Clone()
+        $Global:ConfigurationData.AllNodes = @($ConfigurationData.AllNodes.Where{$_.Name -in $FilteredNode})
+
+        $Global:Datum = $ConfigDataCopy.Datum
+    }
+    else {
+        $Configurationdata = Get-FilteredConfigurationData -Environment $Environment -FilteredNode $FilteredNode
+    }
+    try {
+        . (Join-path $ProjectPath 'RootConfiguration.ps1')
+    }
+    catch {
+        Write-Build Red "ERROR OCCURED DURING COMPILATION"
     }
 }
 
-task CompileRootConfiguration {
-    . (Join-path $ProjectPath 'RootConfiguration.ps1')
-}
-
-task CompileRootMetaMof {
+task compile_root_meta_mof {
     . (Join-path $ProjectPath 'RootMetaMof.ps1')
     RootMetaMOF -ConfigurationData $ConfigurationData -outputPath (Join-Path $BuildOutput 'MetaMof')
 }
 
-task CreateChecksums {
+task create_MOF_checksums {
     Import-Module DscBuildHelpers -Scope Global
     New-DscChecksum -Path (Join-Path $BuildOutput MOF) -verbose:$false
 }

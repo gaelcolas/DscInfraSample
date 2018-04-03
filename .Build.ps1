@@ -7,12 +7,12 @@ Param (
     $ResourcesFolder = "DSC_Resources",
 
     [string]
-    $DscConfigDataFolder = 'DSC_ConfigData',
+    $ConfigDataFolder = 'DSC_ConfigData',
     
     [String]
     $ConfigurationsFolder = "DSC_Configurations",
 
-    $Environment = $(if ($BR = (&git @('rev-parse', '--abbrev-ref', 'HEAD')) -and (Test-Path ".\$DscConfigDataFolder\AllNodes\$BR")) { $BR } else {'DEV'} ),
+    $Environment = $(if ($BR = (&git @('rev-parse', '--abbrev-ref', 'HEAD')) -and (Test-Path ".\$ConfigDataFolder\AllNodes\$BR")) { $BR } else {'DEV'} ),
 
     [String[]]
     $GalleryRepository, #used in ResolveDependencies, has default
@@ -29,72 +29,122 @@ Param (
     [switch]
     $ResolveDependency,
 
+    $ProjectPath = $BuildRoot,
 
-    $ProjectPath = $BuildRoot
+    [switch]
+    $DownloadResourcesAndConfigurations,
+
+    [switch]
+    $Help,
+
+    $TaskHeader = {
+        Param($Path)
+        ''
+        '='*79
+        Write-Build Cyan "`t`t`t$($Task.Name.Replace('_',' ').ToUpper())"
+        Write-Build DarkGray "$(Get-BuildSynopsis $Task)"
+        '-'*79
+        Write-Build DarkGray "  $Path"
+        Write-Build DarkGray "  $($Task.InvocationInfo.ScriptName):$($Task.InvocationInfo.ScriptLineNumber)"
+        ''
+    }
 )
 
 Process {
+    [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
 
     if ($MyInvocation.ScriptName -notlike '*Invoke-Build.ps1') {
-        Invoke-Build $Tasks $MyInvocation.MyCommand.Path @PSBoundParameters
+        if($ResolveDependency -or $PSBoundParameters.ContainsKey('ResolveDependency')) {
+            $PSBoundParameters.Remove('ResolveDependency')
+            $PSBoundParameters.Add('DownloadResourcesAndConfigurations',$true)
+        }
+
+        if($Help) {
+            Invoke-Build ?
+        }
+        else {
+            Invoke-Build $Tasks $MyInvocation.MyCommand.Path @PSBoundParameters
+        }
         return
     }
-
 
     Get-ChildItem -Path "$PSScriptRoot/.build/" -Recurse -Include *.ps1 -Verbose |
         Foreach-Object {
             "Importing file $($_.BaseName)" | Write-Verbose
             . $_.FullName 
         }
-    Write-Host $ConfigurationsFolder
+    
+    if($TaskHeader) { Set-BuildHeader $TaskHeader }
 
-    #task . DscCleanOutput,test,loadConfigData
-    task . Clean,
+    task .  Clean_BuildOutput,
+            Download_all_Dependencies,
             PSModulePath_BuildModules,
-            test,
-            LoadResource,
-            LoadConfigurations,
-            CompileDSCWithDatum,
-            PackageModuleForPull
+            test, #Test_configData
+            load_datum_configdata,
+            Compile_Root_Configuration,
+            compile_root_meta_mof,
+            create_MOF_checksums,      # or use the meta-task: Compile_Datum_DSC,
+            zip_modules_for_pull_server
+
+    task Download_all_Dependencies -if ($DownloadResourcesAndConfigurations -or $Tasks -contains 'Download_all_Dependencies') Download_DSC_Configurations, Download_DSC_Resources
     
     $ConfigurationPath = Join-Path $ProjectPath $ConfigurationsFolder
     $ResourcePath = Join-Path $ProjectPath $ResourcesFolder
+    $ConfigDataPath = Join-Path $ProjectPath $ConfigDataFolder
 
-    task LoadResource {
-        $PSDependResourceDefinition = '.\PSDepend.resources.psd1'
+    task Download_DSC_Resources {
+        $PSDependResourceDefinition = '.\PSDepend.DSC_resources.psd1'
         if(Test-Path $PSDependResourceDefinition) {
             Invoke-PSDepend -Path $PSDependResourceDefinition -Confirm:$False -Target $ResourcePath
         }
     }
 
-    task LoadConfigurations {
-        $PSDependConfigurationDefinition = '.\PSDepend.configurations.psd1'
+    task Download_DSC_Configurations {
+        $PSDependConfigurationDefinition = '.\PSDepend.DSC_configurations.psd1'
         if(Test-Path $PSDependConfigurationDefinition) {
+            Write-Build Green "Pull dependencies from PSDepend.DSC_configurations.psd1"
             Invoke-PSDepend -Path $PSDependConfigurationDefinition -Confirm:$False -Target $ConfigurationPath
         }
     }
 
-    task DscCleanResourcesFolder {
+    task Clean_DSC_Resources_Folder {
         Get-ChildItem -Path "$ResourcesFolder" -Recurse | Remove-Item -force -Recurse -Exclude README.md
     }
 
-    task DscCleanConfigurationsFolder {
+    task Clean_DSC_Configurations_Folder {
         Get-ChildItem -Path "$ConfigurationsFolder" -Recurse | Remove-Item -force -Recurse -Exclude README.md
     }
 
-    task PackageModuleForPull {
-        Get-ModuleFromfolder -ModuleFolder (Join-Path $ProjectPath $ResourcesFolder) | Compress-DscResourceModule -DscBuildOutputModules (Join-Path $BuildOutput 'DscModules')
+    task zip_modules_for_pull_server {
+        if(!([io.path]::IsPathRooted($BuildOutput))) {
+            $BuildOutput = Join-Path $PSScriptRoot $BuildOutput
+        }
+        Import-Module DscBuildHelpers -ErrorAction Stop
+        Get-ModuleFromfolder -ModuleFolder (Join-Path $ProjectPath $ResourcesFolder) |
+            Compress-DscResourceModule -DscBuildOutputModules (Join-Path $BuildOutput 'DscModules') -Verbose:$false 4>$null
     }
     
-
     task test {
         Write-Host (Get-Module Datum,DscBuildHelpers,Pester,PSSscriptAnalyser,PSDeploy -ListAvailable | FT -a | Out-String) 
     }
-
 }
 
 begin {
     [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
+
+    if(!([io.path]::IsPathRooted($BuildOutput))) {
+        $BuildOutput = Join-Path $PSScriptRoot $BuildOutput
+    }
+
+    $BuildModulesPath = Join-Path $BuildOutput 'modules'
+    if(!(test-Path $BuildModulesPath)) {
+        $null = mkdir $BuildModulesPath -force
+    }
+
+    if($BuildModulesPath -notin ($Env:PSModulePath -split ';') ) {
+        $Env:PSmodulePath = $BuildModulesPath + ';' +$Env:PSmodulePath
+    }
+
     function Resolve-Dependency {
         [CmdletBinding()]
         param()
@@ -108,25 +158,23 @@ begin {
             if($PSBoundParameters.ContainsKey('verbose')) { $providerBootstrapParams.add('verbose',$verbose)}
             if ($GalleryProxy) { $providerBootstrapParams.Add('Proxy',$GalleryProxy) }
             $null = Install-PackageProvider @providerBootstrapParams
-            Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+            #Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
         }
 
-        if (!(Get-Module -Listavailable PSDepend)) {
-            Write-verbose "BootStrapping PSDepend"
-            "Parameter $BuildOutput"| Write-verbose
-            $InstallPSDependParams = @{
-                Name = 'PSDepend'
-                AllowClobber = $true
-                Confirm = $false
-                Force = $true
-                Scope = 'CurrentUser'
-            }
-            if($PSBoundParameters.ContainsKey('verbose')) { $InstallPSDependParams.add('verbose',$verbose)}
-            if ($GalleryRepository) { $InstallPSDependParams.Add('Repository',$GalleryRepository) }
-            if ($GalleryProxy)      { $InstallPSDependParams.Add('Proxy',$GalleryProxy) }
-            if ($GalleryCredential) { $InstallPSDependParams.Add('ProxyCredential',$GalleryCredential) }
-            Install-Module @InstallPSDependParams
+        
+        Write-verbose "BootStrapping PSDepend"
+        "Parameter $BuildOutput"| Write-verbose
+        $InstallPSDependParams = @{
+            Name = 'PSDepend'
+            Path = $BuildModulesPath
+            Confirm = $false
         }
+        if($PSBoundParameters.ContainsKey('verbose')) { $InstallPSDependParams.add('verbose',$verbose)}
+        if ($GalleryRepository) { $InstallPSDependParams.Add('Repository',$GalleryRepository) }
+        if ($GalleryProxy)      { $InstallPSDependParams.Add('Proxy',$GalleryProxy) }
+        if ($GalleryCredential) { $InstallPSDependParams.Add('ProxyCredential',$GalleryCredential) }
+        Save-Module @InstallPSDependParams
+    
 
         $PSDependParams = @{
             Force = $true

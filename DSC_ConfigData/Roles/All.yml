@@ -8,10 +8,11 @@ LCM_Config:
     #CertificateID: ...
     ConfigurationMode: ApplyAndAutocorrect
     ConfigurationModeFrequencyMins: 60
+    StatusRetentionTimeInDays: 5 # <-- BUG !!!!!!
   ConfigurationRepositoryShare:
     #Credential:  ...
-    SourcePath: \\your\dfs\share
+    SourcePath: \\contoso.com\dfs\share
   ResourceRepositoryShare:
-    SourcePath: \\your\dfs\share
+    SourcePath: \\contoso.com\dfs\share
 
 

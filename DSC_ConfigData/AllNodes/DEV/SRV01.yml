@@ -3,3 +3,8 @@ Description: Dev version of SRV01
 role: Role1
 Location: LON
 ExampleProperty1: 'From Node'
+Thumbprint: 5481497843FF48372AFB40DE67F3ED37DDAD0A40
+
+LCM_config:
+  Settings:
+    CertificateID: 5481497843FF48372AFB40DE67F3ED37DDAD0A40

@@ -1,24 +1,3 @@
-DatumStructure:
-  - StoreName: AllNodes
-    StoreProvider: Datum::File
-    StoreOptions:
-      Path: "./AllNodes"
- 
-  - StoreName: SiteData
-    StoreProvider: Datum::File
-    StoreOptions:
-      Path: "./SiteData"
-
-  - StoreName: Environments
-    StoreProvider: Datum::File
-    StoreOptions:
-      Path: "./Environments"
-
-  - StoreName: Roles
-    StoreProvider: Datum::File
-    StoreOptions:
-      Path: "./Roles"
-### THUMBPRINT ###
 
 ResolutionPrecedence:
   - 'AllNodes\$($Node.Environment)\$($Node.Name)'
@@ -29,3 +8,25 @@ ResolutionPrecedence:
   - 'Roles\All'
 #  - 'AllNodes\<%= $CurrentNode.PSObject.Properties.where{$_.Name -eq $Node.Name}.Value%>\Roles' #script block execution
 #  - 'AllNodes\All\Roles'
+
+default_lookup_options: MostSpecific
+
+lookup_options:
+  configurations:
+    merge_basetype_array: Unique
+  LCM_config:
+    merge_hash: hash
+  LCM_config\ConfigurationRepositoryShare: deep
+  LCM_config\ConfigurationRepositoryWeb: deep
+  LCM_config\PartialConfiguration: deep
+  LCM_config\ReportServerWeb: deep
+  LCM_config\ResourceRepositoryShare: deep
+  LCM_config\ResourceRepositoryWeb: deep
+  LCM_config\Settings: deep
+  SoftwareBase: hash
+  SoftwareBase\Packages:
+    merge_hash_array: DeepTuple
+    merge_options:
+      tuple_keys:
+        - Name
+        - Version

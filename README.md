@@ -1,3 +1,5 @@
+[![Build status](https://ci.appveyor.com/api/projects/status/m1w3d9rrj8dkneml?svg=true)](https://ci.appveyor.com/project/gaelcolas/dscinfrasample)
+
 # DSC Repository Sample
 
 This repository is an example of an Infrastructure, represented as code, leveraging DSC, and driven by a hierarchical data store, based on a file provider.

@@ -19,7 +19,7 @@
     psdeploy = 'latest'
     xPSDesiredStateConfiguration = 'latest'
     xDscResourceDesigner = 'latest'
-    'gaelcolas/DscBuildHelpers' = 'master'
+    DscBuildHelpers = 'latest'
     Datum = 'latest'
     ProtectedData = 'latest'
     'powershell-yaml' = 'latest'

@@ -73,7 +73,7 @@ DatumStructure:
       DataDir: "./Roles"
 ```
 
-This structure above show the way the `$Datum` object is constructed, by mounting 'Store' to it,
+This structure above show the way the `$Datum` object is constructed, by mounting 'Stores' to it,
 in this case using the built-in File provider, that loads json, yml, psd1 files into hashtables.
 
 You can look at the [RootMetaMOF.ps1](../RootMetaMOF.ps1) to see how the Lookup is used to generate Meta MOFs,

@@ -10,7 +10,7 @@ function Get-FilteredConfigurationData {
 
     $AllNodes = @($Datum.AllNodes.($Environment).PSObject.Properties.Foreach{
         $Node = $Datum.AllNodes.($Environment).($_.Name)
-        $null = $Node.Add('Environment',$Environment)
+        $Node['Environment'] = $Environment
         if(!$Node.contains('Name')) {
             $Null = $Node.Add('Name',$_.Name)
         }

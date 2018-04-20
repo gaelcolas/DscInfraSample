@@ -11,6 +11,9 @@ Param (
     [String]
     $ConfigurationsFolder =  (property ConfigurationsFolder "DSC_Configurations"),
 
+    [String]
+    $Role = (property Role ''),
+
     $Environment = (property Environment 'DEV'),
 
     $ConfigDataFolder = (property ConfigDataFolder 'DSC_ConfigData'),
@@ -53,7 +56,7 @@ Param (
         $Global:Datum = New-DatumStructure -DefinitionFile $DatumDefinitionFile
         
 
-        $Global:ConfigurationData = Get-FilteredConfigurationData -Environment $Environment -FilteredNode $FilteredNode -Datum $Datum
+        $Global:ConfigurationData = Get-FilteredConfigurationData -Environment $Environment -Role $Role -FilteredNode $FilteredNode -Datum $Datum
 }
 
 task Compile_Root_Configuration {
@@ -68,7 +71,7 @@ task Compile_Root_Configuration {
         $Global:Datum = $ConfigDataCopy.Datum
     }
     else {
-        $Configurationdata = Get-FilteredConfigurationData -Environment $Environment -FilteredNode $FilteredNode
+        $Configurationdata = Get-FilteredConfigurationData -Environment $Environment -Role $Role -FilteredNode $FilteredNode
     }
     try {
         . (Join-path $ProjectPath 'RootConfiguration.ps1')

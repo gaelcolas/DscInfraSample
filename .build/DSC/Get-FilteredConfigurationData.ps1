@@ -2,6 +2,9 @@ function Get-FilteredConfigurationData {
     Param(
         $Environment = 'DEV',
 
+        [String]
+        $Role = '',
+
         [AllowNull()]
         $FilterNode,
 
@@ -14,7 +17,13 @@ function Get-FilteredConfigurationData {
         if(!$Node.contains('Name')) {
             $Null = $Node.Add('Name',$_.Name)
         }
-        (@{} + $Node)
+        if($Role -eq ''){
+            (@{} + $Node)
+        }
+        elseif($Node.Role -eq $Role){
+            (@{} + $Node)
+        }
+        
     })
 
     if($FilterNode) {

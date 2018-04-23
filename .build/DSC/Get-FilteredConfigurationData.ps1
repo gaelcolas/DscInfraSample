@@ -2,6 +2,9 @@ function Get-FilteredConfigurationData {
     Param(
         $Environment = 'DEV',
 
+        [ScriptBlock]
+        $Filter = {},
+
         [AllowNull()]
         $FilterNode,
 
@@ -19,6 +22,10 @@ function Get-FilteredConfigurationData {
 
     if($FilterNode) {
         $AllNodes = $AllNodes.Where{$_.Name -in $FilterNode}
+    }
+
+    if($Filter.ToString() -ne ([System.Management.Automation.ScriptBlock]::Create({})).ToString()){
+        $AllNodes = [System.Collections.Hashtable[]]$AllNodes.Where($Filter)
     }
 
     return @{

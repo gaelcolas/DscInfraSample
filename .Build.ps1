@@ -12,6 +12,9 @@ Param (
     [String]
     $ConfigurationsFolder = "DSC_Configurations",
 
+    [ScriptBlock]
+    $Filter = {},
+
     $Environment = $(if ($BR = (&git @('rev-parse', '--abbrev-ref', 'HEAD')) -and (Test-Path ".\$ConfigDataFolder\AllNodes\$BR")) { $BR } else {'DEV'} ),
 
     [String[]]

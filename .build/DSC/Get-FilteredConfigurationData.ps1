@@ -5,9 +5,6 @@ function Get-FilteredConfigurationData {
         [ScriptBlock]
         $Filter = {},
 
-        [AllowNull()]
-        $FilterNode,
-
         $Datum = $(Get-variable Datum -ValueOnly -ErrorAction Stop)
     )
 
@@ -19,10 +16,6 @@ function Get-FilteredConfigurationData {
         }
         (@{} + $Node)
     })
-
-    if($FilterNode) {
-        $AllNodes = $AllNodes.Where{$_.Name -in $FilterNode}
-    }
 
     if($Filter.ToString() -ne ([System.Management.Automation.ScriptBlock]::Create({})).ToString()){
         $AllNodes = [System.Collections.Hashtable[]]$AllNodes.Where($Filter)

@@ -54,28 +54,19 @@ Param (
         $Global:Datum = New-DatumStructure -DefinitionFile $DatumDefinitionFile
         
 
-        $Global:ConfigurationData = Get-FilteredConfigurationData -Environment $Environment -Filter $Filter -FilteredNode $FilteredNode -Datum $Datum
+        $Global:ConfigurationData = Get-FilteredConfigurationData -Environment $Environment -Filter $Filter -Datum $Datum
 }
 
 task Compile_Root_Configuration {
-    '-----------------------'
-    "FilteredNode: $($FilteredNode -Join ', ')"
-    '-----------------------'
+    
+    $Configurationdata = Get-FilteredConfigurationData -Environment $Environment -Filter $Filter
 
-    if($ConfigDataCopy) {
-        $Global:ConfigurationData = $ConfigDataCopy.Clone()
-        $Global:ConfigurationData.AllNodes = @($ConfigurationData.AllNodes.Where{$_.Name -in $FilteredNode})
-
-        $Global:Datum = $ConfigDataCopy.Datum
-    }
-    else {
-        $Configurationdata = Get-FilteredConfigurationData -Environment $Environment -Filter $Filter -FilteredNode $FilteredNode
-    }
     try {
         . (Join-path $ProjectPath 'RootConfiguration.ps1')
     }
     catch {
-        Write-Build Red "ERROR OCCURED DURING COMPILATION"
+        Write-Build Red "ERROR OCCURED DURING COMPILATION: $($_.Exception.Message)"
+        Write-Build Red ($Error[0..4] | Out-String)
     }
 }
 

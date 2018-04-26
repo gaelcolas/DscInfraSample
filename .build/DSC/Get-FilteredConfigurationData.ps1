@@ -1,5 +1,6 @@
 function Get-FilteredConfigurationData {
-    Param(
+    param(
+        [String]
         $Environment = 'DEV',
 
         [ScriptBlock]

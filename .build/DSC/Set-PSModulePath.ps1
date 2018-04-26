@@ -1,5 +1,6 @@
 function Set-PSModulePath {
-    Param(
+    param(
+        [String[]]
         $ModuleToLeaveLoaded,
 
         [String[]]

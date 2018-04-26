@@ -18,8 +18,6 @@ Param (
 
     $ConfigDataFolder = (property ConfigDataFolder 'DSC_ConfigData'),
 
-    $FilterNode = (property FilterNode $false),
-
     $ModuleToLeaveLoaded = (property ModuleToLeaveLoaded @('InvokeBuild','PSReadline','PackageManagement') )
 
 )

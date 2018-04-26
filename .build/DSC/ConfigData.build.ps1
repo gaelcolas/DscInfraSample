@@ -20,6 +20,12 @@ param (
     [String]
     $ConfigDataFolder = (property ConfigDataFolder 'DSC_ConfigData'),
 
+    [String]
+    $BuildVersion = (property BuildVersion '0.0.0'),
+
+    [String]
+    $RsopFolder = (property RsopFolder 'RSOP'),
+
     [String[]]
     $ModuleToLeaveLoaded = (property ModuleToLeaveLoaded @('InvokeBuild', 'PSReadline', 'PackageManagement', 'ISESteroids') )
 )
@@ -37,7 +43,7 @@ task PSModulePath_BuildModules {
     Set-PSModulePath -ModuleToLeaveLoaded $ModuleToLeaveLoaded -PathsToSet @($configurationPath, $resourcePath, $buildModulesPath)
 }
 
-Task Load_Datum_ConfigData {
+task Load_Datum_ConfigData {
     if (![System.IO.Path]::IsPathRooted($BuildOutput))
     {
         $BuildOutput = Join-Path -Path $ProjectPath -ChildPath $BuildOutput
@@ -82,4 +88,27 @@ task Compile_Root_Meta_Mof {
 task Create_Mof_Checksums {
     Import-Module -Name DscBuildHelpers -Scope Global
     New-DscChecksum -Path (Join-Path -Path $BuildOutput -ChildPath MOF) -Verbose:$false
+}
+
+task Compile_Datum_Rsop {
+    if(![System.IO.Path]::IsPathRooted($rsopFolder)) {
+        $rsopOutputPath = Join-Path -Path $BuildOutput -ChildPath $rsopFolder
+    }
+    else {
+        $RsopOutputPath = $rsopFolder
+    }
+
+    if(!(Test-Path -Path $rsopOutputPath)) {
+        mkdir -Path $rsopOutputPath -Force | Out-Null
+    }
+
+    $rsopOutputPathVersion = Join-Path -Path $RsopOutputPath -ChildPath $BuildVersion
+    if(!(Test-Path -Path $rsopOutputPathVersion)) {
+        mkdir -Path $rsopOutputPathVersion -Force | Out-Null
+    }
+
+    $ConfigurationData.AllNodes.Foreach{
+        $nodeRSOP = Get-DatumRsop -Datum $datum -AllNodes ([ordered]@{} + $_)
+        $nodeRSOP | Convertto-Yaml -OutFile (Join-Path -Path $rsopOutputPathVersion -ChildPath "$($_.Name).yml") -Force
+    }
 }

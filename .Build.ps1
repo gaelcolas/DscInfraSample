@@ -61,7 +61,44 @@ param (
         ''
     }
 )
+function Split-Array
+{
+    param(
+        [Parameter(Mandatory)]
+        [System.Collections.IEnumerable]$List,
 
+        [Parameter(Mandatory, ParameterSetName = 'ChunkSize')]
+        [int]$ChunkSize,
+        
+        [Parameter(Mandatory, ParameterSetName = 'ChunkCount')]
+        [int]$ChunkCount
+    )
+    $aggregateList = @()
+    
+    if ($ChunkCount)
+    {
+        $ChunkSize = $List.Count / $ChunkCount
+    }
+
+    if ($ChunkSize)
+    {
+        $blocks = [Math]::Floor($List.Count / $ChunkSize)
+        $leftOver = $List.Count % $ChunkSize
+        for ($i = 0; $i -lt $blocks; $i++)
+        {
+            $end = $ChunkSize * ($i + 1) - 1
+
+            $aggregateList += @(, $List[$start..$end])
+            $start = $end + 1
+        }    
+        if ($leftOver -gt 0)
+        {
+            $aggregateList += @(, $List[$start..($end + $leftOver)])
+        }
+    }
+
+    $aggregateList    
+}
 function Resolve-Dependency
 {
     [CmdletBinding()]
@@ -110,7 +147,6 @@ function Resolve-Dependency
         $InstallPSDependParams.Add('ProxyCredential', $GalleryCredential)
     }
     Save-Module @InstallPSDependParams
-    
 
     $PSDependParams = @{
         Force = $true
@@ -137,12 +173,10 @@ if (!(Test-Path $BuildModulesPath))
     $null = mkdir $BuildModulesPath -Force
 }
 
-if ($BuildModulesPath -notin ($Env:PSModulePath -split ';') )
+if ($BuildModulesPath -notin ($Env:PSModulePath -split ';'))
 {
-    $Env:PSModulePath = $BuildModulesPath + ';' + $Env:PSModulePath
+    $env:PSModulePath = "$BuildModulesPath;$Env:PSModulePath"
 }
-
-
 
 if ($ResolveDependency)
 {
@@ -171,7 +205,7 @@ if ($MyInvocation.ScriptName -notlike '*Invoke-Build.ps1')
 }
 
 Get-ChildItem -Path "$PSScriptRoot/.build/" -Recurse -Include *.ps1 -Verbose |
-ForEach-Object {
+    ForEach-Object {
     "Importing file $($_.BaseName)" | Write-Verbose
     . $_.FullName 
 }
@@ -184,7 +218,9 @@ if ($TaskHeader)
 task . Clean_BuildOutput, 
 Download_All_Dependencies, 
 PSModulePath_BuildModules, 
+Test_ConfigData,
 Load_Datum_ConfigData,
+Compile_Datum_Rsop,
 Compile_Root_Configuration, 
 Compile_Root_Meta_Mof,
 Create_Mof_Checksums, # or use the meta-task: Compile_Datum_DSC,
@@ -195,6 +231,9 @@ task Download_All_Dependencies -if ($DownloadResourcesAndConfigurations -or $Tas
 $ConfigurationPath = Join-Path $ProjectPath -ChildPath $ConfigurationsFolder
 $ResourcePath = Join-Path $ProjectPath -ChildPath $ResourcesFolder
 $ConfigDataPath = Join-Path $ProjectPath -ChildPath $ConfigDataFolder
+if (!$testFolder) {
+    $testFolder = 'Tests'
+}
 
 task Download_DSC_Resources {
     $PSDependResourceDefinition = '.\PSDepend.DSC_resources.psd1'
@@ -228,5 +267,15 @@ task Zip_Modules_For_Pull_Server {
     }
     Import-Module DscBuildHelpers -ErrorAction Stop
     Get-ModuleFromfolder -ModuleFolder (Join-Path $ProjectPath -ChildPath $ResourcesFolder) |
-    Compress-DscResourceModule -DscBuildOutputModules (Join-Path $BuildOutput -ChildPath 'DscModules') -Verbose:$false 4>$null
+        Compress-DscResourceModule -DscBuildOutputModules (Join-Path $BuildOutput -ChildPath 'DscModules') -Verbose:$false 4>$null
+}
+
+task Test_ConfigData {
+    if (!([System.IO.Path]::IsPathRooted($BuildOutput))) {
+        $BuildOutput = Join-Path -Path $PSScriptRoot -ChildPath $BuildOutput
+    }
+    $testResultsPath = Join-Path -Path $BuildOutput -ChildPath testresults.xml
+    $testResults = Invoke-Pester -Script (Join-Path -Path $BuildRoot -ChildPath $TestFolder) -PassThru -OutputFile $testResultsPath -OutputFormat NUnitXml
+
+    assert ($testResults.FailedCount -eq 0)
 }

@@ -3,24 +3,24 @@
 
 @{
     # Set up a mini virtual environment...
-    PSDependOptions = @{
-        AddToPath = $True
-        Target = 'BuildOutput\modules'
+    PSDependOptions              = @{
+        AddToPath  = $True
+        Target     = 'BuildOutput\modules'
         Parameters = @{
             #Force = $True
             #ExtractProject = $true
         }
     }
 
-    invokeBuild = 'latest'
-    buildhelpers = 'latest'
-    pester = 'latest'
-    PSScriptAnalyzer = 'latest'
-    psdeploy = 'latest'
+    invokeBuild                  = 'latest'
+    buildhelpers                 = 'latest'
+    pester                       = 'latest'
+    PSScriptAnalyzer             = 'latest'
+    psdeploy                     = 'latest'
     xPSDesiredStateConfiguration = 'latest'
-    xDscResourceDesigner = 'latest'
-    DscBuildHelpers = 'latest'
-    Datum = 'latest'
-    ProtectedData = 'latest'
-    'powershell-yaml' = 'latest'
+    xDscResourceDesigner         = 'latest'
+    DscBuildHelpers              = 'latest'
+    Datum                        = 'latest'
+    ProtectedData                = 'latest'
+    'powershell-yaml'            = 'latest'
 }

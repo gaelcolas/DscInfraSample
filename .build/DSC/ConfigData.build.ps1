@@ -88,7 +88,7 @@ task Compile_Root_Configuration {
     try 
     {
         $mofs = . (Join-Path -Path $ProjectPath -ChildPath 'RootConfiguration.ps1')
-        Write-Build Green "Successfully comiled $($mofs.Count) MOF files"
+        Write-Build Green "Successfully compiled $($mofs.Count) MOF files"
     }
     catch 
     {
@@ -99,7 +99,8 @@ task Compile_Root_Configuration {
 
 task Compile_Root_Meta_Mof {
     . (Join-Path -Path $ProjectPath -ChildPath 'RootMetaMof.ps1')
-    RootMetaMOF -ConfigurationData $configurationData -OutputPath (Join-Path -Path $BuildOutput -ChildPath 'MetaMof')
+    $metaMofs = RootMetaMOF -ConfigurationData $configurationData -OutputPath (Join-Path -Path $BuildOutput -ChildPath 'MetaMof')
+    Write-Build Green "Successfully compiled $($metaMofs.Count) MOF files"
 }
 
 task Create_Mof_Checksums {

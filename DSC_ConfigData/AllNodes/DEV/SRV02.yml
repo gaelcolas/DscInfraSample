@@ -1,6 +1,6 @@
 NodeName: SRV02
 Description: Dev version of SRV01
-role: WindowsBase
+Role: WindowsBase
 Location: LON
 ExampleProperty1: 'From Node'
 

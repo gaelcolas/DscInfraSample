@@ -221,7 +221,7 @@ if ($MyInvocation.ScriptName -notlike '*Invoke-Build.ps1')
                 
                     @{ 
                         File        = $MyInvocation.MyCommand.Path
-                        Task        = 'PSModulePath_BuildModules', 'Load_Datum_ConfigData', 'Compile_Root_Configuration'
+                        Task        = 'PSModulePath_BuildModules', 'Load_Datum_ConfigData', 'Compile_Root_Configuration', 'Compile_Root_Meta_Mof'
                         Filter      = [scriptblock]::Create($filterString)
                         RandomWait  = $true
                     }
@@ -263,8 +263,8 @@ else
     Test_ConfigData,
     Load_Datum_ConfigData,
     Compile_Datum_Rsop,
-    Compile_Root_Configuration
-    #Compile_Root_Meta_Mof,
+    Compile_Root_Configuration,
+    Compile_Root_Meta_Mof
     #Create_Mof_Checksums, # or use the meta-task: Compile_Datum_DSC,
     #Zip_Modules_For_Pull_Server
     #Deployment

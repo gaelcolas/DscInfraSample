@@ -20,18 +20,29 @@ param (
 
     $Environment = $(
         $branch = $env:BranchName
-        $branch = if ($branch -eq 'master') { 'Prod' } else { 'Dev' }
-        if (Test-Path -Path ".\$ConfigDataFolder\AllNodes\$branch") {
+        $branch = if ($branch -eq 'master')
+        { 'Prod' 
+        }
+        else
+        { 'Dev' 
+        }
+        if (Test-Path -Path ".\$ConfigDataFolder\AllNodes\$branch")
+        {
             $branch
         }
-        else {
+        else
+        {
             'Dev'
         }
     ),
     
     $BuildVersion = $(
-        if ($gitshortid = (& git rev-parse --short HEAD)) {$gitshortid}
-        else {'0.0.0' }
+        if ($gitshortid = (& git rev-parse --short HEAD))
+        {$gitshortid
+        }
+        else
+        {'0.0.0' 
+        }
     ),
 
     [String[]]
@@ -92,15 +103,16 @@ function Split-Array
 
     $blocks = [Math]::Floor($List.Count / $ChunkSize)
     $leftOver = $List.Count % $ChunkSize
-    for($i=0; $i -lt $blocks; $i++) {
+    for ($i = 0; $i -lt $blocks; $i++)
+    {
         $end = $ChunkSize * ($i + 1) - 1
 
-        $aggregateList += @(,$List[$start..$end])
+        $aggregateList += @(, $List[$start..$end])
         $start = $end + 1
     }    
-    if($leftOver -gt 0)
+    if ($leftOver -gt 0)
     {
-        $aggregateList += @(,$List[$start..($end + $leftOver)])
+        $aggregateList += @(, $List[$start..($end + $leftOver)])
     }
 
     , $aggregateList    
@@ -220,10 +232,14 @@ if ($MyInvocation.ScriptName -notlike '*Invoke-Build.ps1')
                     $PSBoundParameters.Filter = [scriptblock]::Create($filterString)
                 
                     @{ 
-                        File        = $MyInvocation.MyCommand.Path
-                        Task        = 'PSModulePath_BuildModules', 'Load_Datum_ConfigData', 'Compile_Root_Configuration', 'Compile_Root_Meta_Mof'
-                        Filter      = [scriptblock]::Create($filterString)
-                        RandomWait  = $true
+                        File       = $MyInvocation.MyCommand.Path
+                        Task       = 'PSModulePath_BuildModules',
+                        'Load_Datum_ConfigData',
+                        'Compile_Datum_Rsop',
+                        'Compile_Root_Configuration',
+                        'Compile_Root_Meta_Mof'
+                        Filter     = [scriptblock]::Create($filterString)
+                        RandomWait = $true
                     }
                 }
                 Build-Parallel $mofCompilationTasks
@@ -234,7 +250,7 @@ if ($MyInvocation.ScriptName -notlike '*Invoke-Build.ps1')
 }
 
 Get-ChildItem -Path "$PSScriptRoot/.build/" -Recurse -Include *.ps1 -Verbose |
-ForEach-Object {
+    ForEach-Object {
     "Importing file $($_.BaseName)" | Write-Verbose
     . $_.FullName 
 }
@@ -250,8 +266,7 @@ if ($MofCompilationTaskCount)
     Download_All_Dependencies, 
     PSModulePath_BuildModules, 
     Test_ConfigData,
-    Load_Datum_ConfigData,
-    Compile_Datum_Rsop
+    Load_Datum_ConfigData    
     #Create_Mof_Checksums, # or use the meta-task: Compile_Datum_DSC,
     #Zip_Modules_For_Pull_Server
 }
@@ -312,7 +327,7 @@ task Zip_Modules_For_Pull_Server {
     }
     Import-Module DscBuildHelpers -ErrorAction Stop
     Get-ModuleFromfolder -ModuleFolder (Join-Path $ProjectPath -ChildPath $ResourcesFolder) |
-    Compress-DscResourceModule -DscBuildOutputModules (Join-Path $BuildOutput -ChildPath 'DscModules') -Verbose:$false 4>$null
+        Compress-DscResourceModule -DscBuildOutputModules (Join-Path $BuildOutput -ChildPath 'DscModules') -Verbose:$false 4>$null
 }
 
 task Test_ConfigData {

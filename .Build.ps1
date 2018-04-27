@@ -14,14 +14,24 @@ param (
     [ScriptBlock]
     $Filter = {},
 
-    $Environment = $(if ($BR = (&git.exe @('rev-parse', '--abbrev-ref', 'HEAD')) -and (Test-Path -Path ".\$ConfigDataFolder\AllNodes\$BR"))
-        {
-            $BR
+    [int]$MofCompilationTaskCount,
+    
+    [switch]$RandomWait,
+
+    $Environment = $(
+        $branch = $env:BranchName
+        $branch = if ($branch -eq 'master') { 'Prod' } else { 'Dev' }
+        if (Test-Path -Path ".\$ConfigDataFolder\AllNodes\$branch") {
+            $branch
         }
-        else
-        {
-            'DEV'
+        else {
+            'Dev'
         }
+    ),
+    
+    $BuildVersion = $(
+        if ($gitshortid = (& git rev-parse --short HEAD)) {$gitshortid}
+        else {'0.0.0' }
     ),
 
     [String[]]
@@ -31,7 +41,7 @@ param (
     $GalleryProxy, #used in ResolveDependencies, $null if not specified
 
     [Switch]
-    $ForceEnvironmentVariables = [switch]$true,
+    $ForceEnvironmentVariables = $true,
 
     [Parameter(Position = 0)]
     $Tasks,
@@ -77,27 +87,23 @@ function Split-Array
     
     if ($ChunkCount)
     {
-        $ChunkSize = $List.Count / $ChunkCount
+        $ChunkSize = [Math]::Ceiling($List.Count / $ChunkCount)
     }
 
-    if ($ChunkSize)
+    $blocks = [Math]::Floor($List.Count / $ChunkSize)
+    $leftOver = $List.Count % $ChunkSize
+    for($i=0; $i -lt $blocks; $i++) {
+        $end = $ChunkSize * ($i + 1) - 1
+
+        $aggregateList += @(,$List[$start..$end])
+        $start = $end + 1
+    }    
+    if($leftOver -gt 0)
     {
-        $blocks = [Math]::Floor($List.Count / $ChunkSize)
-        $leftOver = $List.Count % $ChunkSize
-        for ($i = 0; $i -lt $blocks; $i++)
-        {
-            $end = $ChunkSize * ($i + 1) - 1
-
-            $aggregateList += @(, $List[$start..$end])
-            $start = $end + 1
-        }    
-        if ($leftOver -gt 0)
-        {
-            $aggregateList += @(, $List[$start..($end + $leftOver)])
-        }
+        $aggregateList += @(,$List[$start..($end + $leftOver)])
     }
 
-    $aggregateList    
+    , $aggregateList    
 }
 function Resolve-Dependency
 {
@@ -113,7 +119,7 @@ function Resolve-Dependency
         }
         if ($PSBoundParameters.ContainsKey('verbose'))
         {
-            $providerBootstrapParams.add('verbose', $verbose)
+            $providerBootstrapParams.Add('verbose', $verbose)
         }
         if ($GalleryProxy)
         {
@@ -195,17 +201,40 @@ if ($MyInvocation.ScriptName -notlike '*Invoke-Build.ps1')
 
     if ($Help)
     {
-        Invoke-Build.ps1 ?
+        Invoke-Build ?
     }
     else
     {
         Invoke-Build $Tasks $MyInvocation.MyCommand.Path @PSBoundParameters
+            
+        if ($MofCompilationTaskCount)
+        {
+            $global:splittedNodes = Split-Array -List $ConfigurationData.AllNodes -ChunkCount $MofCompilationTaskCount
+            
+            if ($MofCompilationTaskCount)
+            {
+                $mofCompilationTasks = foreach ($nodeSet in $global:splittedNodes)
+                {
+                    $nodeNamesInSet = "'$($nodeSet.Name -join "', '")'"
+                    $filterString = '$_.NodeName -in {0}' -f $nodeNamesInSet
+                    $PSBoundParameters.Filter = [scriptblock]::Create($filterString)
+                
+                    @{ 
+                        File        = $MyInvocation.MyCommand.Path
+                        Task        = 'PSModulePath_BuildModules', 'Load_Datum_ConfigData', 'Compile_Root_Configuration'
+                        Filter      = [scriptblock]::Create($filterString)
+                        RandomWait  = $true
+                    }
+                }
+                Build-Parallel $mofCompilationTasks
+            }
+        }
+        return
     }
-    return
 }
 
 Get-ChildItem -Path "$PSScriptRoot/.build/" -Recurse -Include *.ps1 -Verbose |
-    ForEach-Object {
+ForEach-Object {
     "Importing file $($_.BaseName)" | Write-Verbose
     . $_.FullName 
 }
@@ -215,23 +244,39 @@ if ($TaskHeader)
     Set-BuildHeader $TaskHeader
 }
 
-task . Clean_BuildOutput, 
-Download_All_Dependencies, 
-PSModulePath_BuildModules, 
-Test_ConfigData,
-Load_Datum_ConfigData,
-Compile_Datum_Rsop,
-Compile_Root_Configuration, 
-Compile_Root_Meta_Mof,
-Create_Mof_Checksums, # or use the meta-task: Compile_Datum_DSC,
-Zip_Modules_For_Pull_Server
+if ($MofCompilationTaskCount)
+{
+    task . Clean_BuildOutput, 
+    Download_All_Dependencies, 
+    PSModulePath_BuildModules, 
+    Test_ConfigData,
+    Load_Datum_ConfigData,
+    Compile_Datum_Rsop
+    #Create_Mof_Checksums, # or use the meta-task: Compile_Datum_DSC,
+    #Zip_Modules_For_Pull_Server
+}
+else
+{
+    task . Clean_BuildOutput,
+    Download_All_Dependencies,
+    PSModulePath_BuildModules,
+    Test_ConfigData,
+    Load_Datum_ConfigData,
+    Compile_Datum_Rsop,
+    Compile_Root_Configuration
+    #Compile_Root_Meta_Mof,
+    #Create_Mof_Checksums, # or use the meta-task: Compile_Datum_DSC,
+    #Zip_Modules_For_Pull_Server
+    #Deployment
+}
 
 task Download_All_Dependencies -if ($DownloadResourcesAndConfigurations -or $Tasks -contains 'Download_All_Dependencies') Download_DSC_Configurations, Download_DSC_Resources
     
 $ConfigurationPath = Join-Path $ProjectPath -ChildPath $ConfigurationsFolder
 $ResourcePath = Join-Path $ProjectPath -ChildPath $ResourcesFolder
 $ConfigDataPath = Join-Path $ProjectPath -ChildPath $ConfigDataFolder
-if (!$testFolder) {
+if (!$testFolder)
+{
     $testFolder = 'Tests'
 }
 
@@ -267,14 +312,15 @@ task Zip_Modules_For_Pull_Server {
     }
     Import-Module DscBuildHelpers -ErrorAction Stop
     Get-ModuleFromfolder -ModuleFolder (Join-Path $ProjectPath -ChildPath $ResourcesFolder) |
-        Compress-DscResourceModule -DscBuildOutputModules (Join-Path $BuildOutput -ChildPath 'DscModules') -Verbose:$false 4>$null
+    Compress-DscResourceModule -DscBuildOutputModules (Join-Path $BuildOutput -ChildPath 'DscModules') -Verbose:$false 4>$null
 }
 
 task Test_ConfigData {
-    if (!([System.IO.Path]::IsPathRooted($BuildOutput))) {
+    if (!([System.IO.Path]::IsPathRooted($BuildOutput)))
+    {
         $BuildOutput = Join-Path -Path $PSScriptRoot -ChildPath $BuildOutput
     }
-    $testResultsPath = Join-Path -Path $BuildOutput -ChildPath testresults.xml
+    $testResultsPath = Join-Path -Path $BuildOutput -ChildPath TestResults.xml
     $testResults = Invoke-Pester -Script (Join-Path -Path $BuildRoot -ChildPath $TestFolder) -PassThru -OutputFile $testResultsPath -OutputFormat NUnitXml
 
     assert ($testResults.FailedCount -eq 0)

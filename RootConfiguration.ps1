@@ -13,7 +13,7 @@ configuration "RootConfiguration"
 
     node $ConfigurationData.AllNodes.NodeName {
         Write-Host "`r`n$('-'*75)`r`n$($Node.Name) : $($Node.NodeName) : $(&$module { Get-PSTopConfigurationName })" -ForegroundColor Yellow
-        $Env:PSModulePath = $goodPSModulePath
+        $env:PSModulePath = $goodPSModulePath
         (Lookup 'Configurations').Foreach{
             $ConfigurationName = $_
             $(Write-Debug "`tLooking up params for $ConfigurationName")
@@ -21,18 +21,18 @@ configuration "RootConfiguration"
             $DscError = [System.Collections.ArrayList]::new()
             Get-DscSplattedResource -ResourceName $ConfigurationName -ExecutionName $ConfigurationName -Properties $Properties
             $(
-                if($Error[0] -and $LastError -ne $Error[0]) {
-                    $LastIndex = [Math]::Max( ($Error.LastIndexOf($LastError) -1), -1)
-                    if($LastIndex -gt 0) {
+                if($Error[0] -and $lastError -ne $Error[0]) {
+                    $lastIndex = [Math]::Max( ($Error.LastIndexOf($lastError) -1), -1)
+                    if($lastIndex -gt 0) {
                         $Error[0..$lastIndex].Foreach{
-                            if($Message = Get-DscErrorMessage -Exception $_) {
-                                $null = $DscError.Add($Message)
+                            if($message = Get-DscErrorMessage -Exception $_) {
+                                $null = $DscError.Add($message)
                             }
                         }
                     }
                     else {
                         if($Message = Get-DscErrorMessage -Exception $Error[0]) {
-                            $null = $DscError.add($Message)
+                            $null = $DscError.Add($Message)
                         }
                     }
                     $lastError = $Error[0]

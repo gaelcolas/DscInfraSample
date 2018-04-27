@@ -14,6 +14,9 @@ param (
     [ScriptBlock]
     $Filter = (property Filter {}),
 
+    [switch]
+    $RandomWait = (property RandomWait $false),
+
     [String]
     $Environment = (property Environment 'DEV'),
 
@@ -31,6 +34,18 @@ param (
 )
 
 task PSModulePath_BuildModules {
+    Write-Build Green "RandomWait: $($RandomWait.ToString())"
+    if ($RandomWait)
+    {
+        $rnd = Get-Random -Minimum 0 -Maximum 10
+        Write-Build Green "Waiting $rnd seconds to start the compilation job"
+        Start-Sleep -Seconds $rnd
+    }
+    else
+    {
+        Write-Build Green "Not waiting, starting compilation job"
+    }
+
     if (!([System.IO.Path]::IsPathRooted($BuildOutput)))
     {
         $BuildOutput = Join-Path -Path $ProjectPath -ChildPath $BuildOutput
@@ -55,23 +70,25 @@ task Load_Datum_ConfigData {
         
     Set-PSModulePath -ModuleToLeaveLoaded $ModuleToLeaveLoaded -PathsToSet @($configurationPath, $resourcePath, $buildModulesPath)
 
+    Import-Module -Name ProtectedData -Scope Global
     Import-Module -Name PowerShell-Yaml -Scope Global
-    Import-Module -Name Datum -Force -Scope Global
+    Import-Module -Name Datum -Scope Global
 
-    $DatumDefinitionFile = Join-Path -Resolve -Path $configDataPath -ChildPath 'Datum.yml'
-    Write-Build Green "Loading Datum Definition from $DatumDefinitionFile"
-    $Global:Datum = New-DatumStructure -DefinitionFile $DatumDefinitionFile
-        
-
-    $Global:ConfigurationData = Get-FilteredConfigurationData -Environment $Environment -Filter $Filter -Datum $Datum
+    $datumDefinitionFile = Join-Path -Resolve -Path $configDataPath -ChildPath 'Datum.yml'
+    Write-Build Green "Loading Datum Definition from '$datumDefinitionFile'"
+    $global:datum = New-DatumStructure -DefinitionFile $datumDefinitionFile
+    Write-Build Green "Node count: $(($datum.AllNodes.$Environment | Get-Member -MemberType ScriptProperty | Measure-Object).Count)"
+    
+    Write-Build Green "Filter: $($Filter.ToString())"
+    $global:configurationData = Get-FilteredConfigurationData -Environment $Environment -Filter $Filter -Datum $datum
+    Write-Build Green "Node count after applying filter: $($configurationData.AllNodes.Count)"
 }
 
 task Compile_Root_Configuration {
-    $Configurationdata = Get-FilteredConfigurationData -Environment $Environment -Filter $Filter
-
     try 
     {
-        . (Join-Path -Path $ProjectPath -ChildPath 'RootConfiguration.ps1')
+        $mofs = . (Join-Path -Path $ProjectPath -ChildPath 'RootConfiguration.ps1')
+        Write-Build Green "Successfully comiled $($mofs.Count) MOF files"
     }
     catch 
     {
@@ -82,7 +99,7 @@ task Compile_Root_Configuration {
 
 task Compile_Root_Meta_Mof {
     . (Join-Path -Path $ProjectPath -ChildPath 'RootMetaMof.ps1')
-    RootMetaMOF -ConfigurationData $Configurationdata -OutputPath (Join-Path -Path $BuildOutput -ChildPath 'MetaMof')
+    RootMetaMOF -ConfigurationData $configurationData -OutputPath (Join-Path -Path $BuildOutput -ChildPath 'MetaMof')
 }
 
 task Create_Mof_Checksums {
@@ -107,7 +124,7 @@ task Compile_Datum_Rsop {
         mkdir -Path $rsopOutputPathVersion -Force | Out-Null
     }
 
-    $ConfigurationData.AllNodes.Foreach{
+    $configurationData.AllNodes.Foreach{
         $nodeRSOP = Get-DatumRsop -Datum $datum -AllNodes ([ordered]@{} + $_)
         $nodeRSOP | Convertto-Yaml -OutFile (Join-Path -Path $rsopOutputPathVersion -ChildPath "$($_.Name).yml") -Force
     }

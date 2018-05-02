@@ -122,6 +122,7 @@ function Resolve-Dependency
     [CmdletBinding()]
     param()
 
+    Write-Host "Downloading dependencies, this may take a while" -ForegroundColor Green
     if (!(Get-PackageProvider -Name NuGet -ForceBootstrap))
     {
         $providerBootstrapParams = @{
@@ -129,9 +130,9 @@ function Resolve-Dependency
             force          = $true
             ForceBootstrap = $true
         }
-        if ($PSBoundParameters.ContainsKey('verbose'))
+        if ($PSBoundParameters.ContainsKey('Verbose'))
         {
-            $providerBootstrapParams.Add('verbose', $verbose)
+            $providerBootstrapParams.Add('Verbose', $verbose)
         }
         if ($GalleryProxy)
         {

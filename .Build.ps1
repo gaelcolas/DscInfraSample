@@ -11,6 +11,9 @@ param (
     [String]
     $ConfigurationsFolder = 'DSC_Configurations',
 
+    [String]
+    $TestFolder = 'Tests',
+
     [ScriptBlock]
     $Filter = {},
 
@@ -233,14 +236,20 @@ if ($MyInvocation.ScriptName -notlike '*Invoke-Build.ps1')
                     $PSBoundParameters.Filter = [scriptblock]::Create($filterString)
                 
                     @{ 
-                        File       = $MyInvocation.MyCommand.Path
-                        Task       = 'PSModulePath_BuildModules',
+                        File                 = $MyInvocation.MyCommand.Path
+                        Task                 = 'PSModulePath_BuildModules',
                         'Load_Datum_ConfigData',
                         'Compile_Datum_Rsop',
                         'Compile_Root_Configuration',
                         'Compile_Root_Meta_Mof'
-                        Filter     = [scriptblock]::Create($filterString)
-                        RandomWait = $true
+                        Filter               = [scriptblock]::Create($filterString)
+                        RandomWait           = $true
+                        BuildOutput          = $BuildOutput
+                        ResourcesFolder      = $ResourcesFolder
+                        ConfigDataFolder     = $ConfigDataFolder
+                        ConfigurationsFolder = $ConfigurationsFolder
+                        TestFolder           = $TestFolder
+                        Environment          = $Environment
                     }
                 }
                 Build-Parallel $mofCompilationTasks
@@ -288,19 +297,16 @@ else
 
 task Download_All_Dependencies -if ($DownloadResourcesAndConfigurations -or $Tasks -contains 'Download_All_Dependencies') Download_DSC_Configurations, Download_DSC_Resources
     
-$ConfigurationPath = Join-Path $ProjectPath -ChildPath $ConfigurationsFolder
-$ResourcePath = Join-Path $ProjectPath -ChildPath $ResourcesFolder
-$ConfigDataPath = Join-Path $ProjectPath -ChildPath $ConfigDataFolder
-if (!$testFolder)
-{
-    $testFolder = 'Tests'
-}
+$configurationPath = Join-Path -Path $ProjectPath -ChildPath $ConfigurationsFolder
+$resourcePath = Join-Path -Path $ProjectPath -ChildPath $ResourcesFolder
+$configDataPath = Join-Path -Path $ProjectPath -ChildPath $ConfigDataFolder
+$testPath = Join-Path -Path $BuildRoot -ChildPath $TestFolder
 
 task Download_DSC_Resources {
     $PSDependResourceDefinition = '.\PSDepend.DSC_resources.psd1'
     if (Test-Path $PSDependResourceDefinition)
     {
-        Invoke-PSDepend -Path $PSDependResourceDefinition -Confirm:$false -Target $ResourcePath
+        Invoke-PSDepend -Path $PSDependResourceDefinition -Confirm:$false -Target $resourcePath
     }
 }
 
@@ -309,7 +315,7 @@ task Download_DSC_Configurations {
     if (Test-Path $PSDependConfigurationDefinition)
     {
         Write-Build Green 'Pull dependencies from PSDepend.DSC_configurations.psd1'
-        Invoke-PSDepend -Path $PSDependConfigurationDefinition -Confirm:$false -Target $ConfigurationPath
+        Invoke-PSDepend -Path $PSDependConfigurationDefinition -Confirm:$false -Target $configurationPath
     }
 }
 
@@ -332,12 +338,17 @@ task Zip_Modules_For_Pull_Server {
 }
 
 task Test_ConfigData {
+    if (!(Test-Path -Path $testPath))
+    {
+        Write-Build Yellow "Path for tests '$testPath' does not exist"
+        return
+    }
     if (!([System.IO.Path]::IsPathRooted($BuildOutput)))
     {
         $BuildOutput = Join-Path -Path $PSScriptRoot -ChildPath $BuildOutput
     }
     $testResultsPath = Join-Path -Path $BuildOutput -ChildPath TestResults.xml
-    $testResults = Invoke-Pester -Script (Join-Path -Path $BuildRoot -ChildPath $TestFolder) -PassThru -OutputFile $testResultsPath -OutputFormat NUnitXml
+    $testResults = Invoke-Pester -Script $testPath -PassThru -OutputFile $testResultsPath -OutputFormat NUnitXml
 
     assert ($testResults.FailedCount -eq 0)
 }

@@ -12,11 +12,11 @@
         }
     }
 
-    invokeBuild                  = 'latest'
-    buildhelpers                 = 'latest'
-    pester                       = 'latest'
+    InvokeBuild                  = 'latest'
+    BuildHelpers                 = 'latest'
+    Pester                       = 'latest'
     PSScriptAnalyzer             = 'latest'
-    psdeploy                     = 'latest'
+    PSDeploy                     = 'latest'
     xPSDesiredStateConfiguration = 'latest'
     xDscResourceDesigner         = 'latest'
     DscBuildHelpers              = 'latest'

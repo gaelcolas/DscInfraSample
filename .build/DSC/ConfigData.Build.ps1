@@ -1,6 +1,6 @@
 param (
     [System.IO.DirectoryInfo]
-    $ProjectPath = (property ProjectPath $BuildRoot),
+    $ProjectPath = (property ProjectPath $ProjectPath),
     
     [String]
     $BuildOutput = (property BuildOutput 'BuildOutput'),
@@ -53,7 +53,7 @@ task PSModulePath_BuildModules {
 
     $configurationPath = Join-Path -Path $ProjectPath -ChildPath $ConfigurationsFolder
     $resourcePath = Join-Path -Path $ProjectPath -ChildPath $ResourcesFolder
-    $buildModulesPath = Join-Path -Path $BuildOutput -ChildPath 'modules'
+    $buildModulesPath = Join-Path -Path $BuildOutput -ChildPath Modules
         
     Set-PSModulePath -ModuleToLeaveLoaded $ModuleToLeaveLoaded -PathsToSet @($configurationPath, $resourcePath, $buildModulesPath)
 }

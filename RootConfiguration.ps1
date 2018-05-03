@@ -57,4 +57,4 @@ configuration "RootConfiguration"
     }
 }
 
-RootConfiguration -ConfigurationData $ConfigurationData -Out "$BuildRoot\BuildOutput\MOF\" -ErrorAction Stop
+RootConfiguration -ConfigurationData $ConfigurationData -OutputPath "$ProjectPath\BuildOutput\MOF\" -ErrorAction Stop

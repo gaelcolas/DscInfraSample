@@ -93,7 +93,7 @@ task Compile_Root_Configuration {
     catch 
     {
         Write-Build Red "ERROR OCCURED DURING COMPILATION: $($_.Exception.Message)"
-        Write-Build Red ($Error[0] | Out-String)
+        Write-Build Red ($Error[0..2] | Out-String)
     }
 }
 

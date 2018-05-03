@@ -2,7 +2,7 @@ Import-Module DscBuildHelpers -Scope Global
 
 [DscLocalConfigurationManager()]
 Configuration RootMetaMOF {
-    Node $ConfigurationData.AllNodes.Nodename {
+    Node $ConfigurationData.AllNodes.Nodename.GetEnumerator().NodeName {
 
         $LcmConfig = $(Lookup 'LCM_Config\Settings' $Null)
         #If the Nodename is a GUID, use Config ID instead Named config, as per SMB Pull requirements

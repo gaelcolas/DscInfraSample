@@ -1,6 +1,6 @@
 param (
     [System.IO.DirectoryInfo]
-    $ProjectPath = (property ProjectPath $BuildRoot),
+    $ProjectPath = (property ProjectPath $ProjectPath),
 
     [String]
     $BuildOutput = (property BuildOutput 'C:\BuildOutput'),

@@ -5,7 +5,7 @@
     # Set up a mini virtual environment...
     PSDependOptions              = @{
         AddToPath  = $True
-        Target     = 'BuildOutput\modules'
+        Target     = 'BuildOutput\Modules'
         Parameters = @{
             #Force = $True
             #ExtractProject = $true

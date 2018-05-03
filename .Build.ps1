@@ -1,6 +1,7 @@
+[CmdletBinding()]
 param (
     [String]
-    $BuildOutput = 'BuildOutput',
+    $buildOutput = 'BuildOutput',
     
     [String]
     $ResourcesFolder = 'DSC_Resources',
@@ -64,7 +65,7 @@ param (
     $ResolveDependency,
 
     [String]
-    $ProjectPath = $BuildRoot,
+    $ProjectPath,
 
     [Switch]
     $DownloadResourcesAndConfigurations,
@@ -85,6 +86,7 @@ param (
         ''
     }
 )
+
 function Split-Array
 {
     param(
@@ -135,7 +137,7 @@ function Resolve-Dependency
         }
         if ($PSBoundParameters.ContainsKey('Verbose'))
         {
-            $providerBootstrapParams.Add('Verbose', $verbose)
+            $providerBootstrapParams.Add('Verbose', $Verbose)
         }
         if ($GalleryProxy)
         {
@@ -146,37 +148,37 @@ function Resolve-Dependency
     }
         
     Write-Verbose -Message 'BootStrapping PSDepend'
-    "Parameter $BuildOutput"| Write-Verbose
-    $InstallPSDependParams = @{
+    Write-Verbose -Message "Parameter $buildOutput"
+    $installPSDependParams = @{
         Name    = 'PSDepend'
-        Path    = $BuildModulesPath
+        Path    = $buildModulesPath
         Confirm = $false
     }
     if ($PSBoundParameters.ContainsKey('verbose'))
     {
-        $InstallPSDependParams.add('verbose', $verbose)
+        $installPSDependParams.Add('Verbose', $Verbose)
     }
     if ($GalleryRepository)
     {
-        $InstallPSDependParams.Add('Repository', $GalleryRepository)
+        $installPSDependParams.Add('Repository', $GalleryRepository)
     }
     if ($GalleryProxy)
     {
-        $InstallPSDependParams.Add('Proxy', $GalleryProxy)
+        $installPSDependParams.Add('Proxy', $GalleryProxy)
     }
     if ($GalleryCredential)
     {
-        $InstallPSDependParams.Add('ProxyCredential', $GalleryCredential)
+        $installPSDependParams.Add('ProxyCredential', $GalleryCredential)
     }
-    Save-Module @InstallPSDependParams
+    Save-Module @installPSDependParams
 
     $PSDependParams = @{
         Force = $true
-        Path  = "$PSScriptRoot\PSDepend.build.psd1"
+        Path  = "$ProjectPath\PSDepend.Build.psd1"
     }
-    if ($PSBoundParameters.ContainsKey('verbose'))
+    if ($PSBoundParameters.ContainsKey('Verbose'))
     {
-        $PSDependParams.add('verbose', $verbose)
+        $PSDependParams.add('Verbose', $Verbose)
     }
     Invoke-PSDepend @PSDependParams
     Write-Verbose 'Project Bootstrapped, returning to Invoke-Build'
@@ -184,28 +186,32 @@ function Resolve-Dependency
 
 [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
 
-if (!([System.IO.Path]::IsPathRooted($BuildOutput)))
+#cannot be a default parameter value due to https://github.com/PowerShell/PowerShell/issues/4688
+if (-not $ProjectPath)
 {
-    $BuildOutput = Join-Path -Path $PSScriptRoot -ChildPath $BuildOutput
+    $ProjectPath = $PSScriptRoot
 }
 
-$BuildModulesPath = Join-Path -Path $BuildOutput -ChildPath 'Modules'
-if (!(Test-Path $BuildModulesPath))
+if (!([System.IO.Path]::IsPathRooted($buildOutput)))
 {
-    $null = mkdir $BuildModulesPath -Force
+    $buildOutput = Join-Path -Path $ProjectPath -ChildPath $buildOutput
 }
 
-if ($BuildModulesPath -notin ($Env:PSModulePath -split ';'))
+$buildModulesPath = Join-Path -Path $buildOutput -ChildPath 'Modules'
+if (!(Test-Path -Path $buildModulesPath))
 {
-    $env:PSModulePath = "$BuildModulesPath;$Env:PSModulePath"
+    $null = mkdir -Path $buildModulesPath -Force
+}
+
+if ($buildModulesPath -notin ($Env:PSModulePath -split ';'))
+{
+    $env:PSModulePath = "$buildModulesPath;$Env:PSModulePath"
 }
 
 if ($ResolveDependency)
 {
     Resolve-Dependency
 }
-
-[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
 
 if ($MyInvocation.ScriptName -notlike '*Invoke-Build.ps1')
 {
@@ -221,7 +227,7 @@ if ($MyInvocation.ScriptName -notlike '*Invoke-Build.ps1')
     }
     else
     {
-        Invoke-Build $Tasks $MyInvocation.MyCommand.Path @PSBoundParameters
+        Invoke-Build -Tasks $Tasks -File $MyInvocation.MyCommand.Path @PSBoundParameters
             
         if ($MofCompilationTaskCount)
         {
@@ -244,7 +250,7 @@ if ($MyInvocation.ScriptName -notlike '*Invoke-Build.ps1')
                         'Compile_Root_Meta_Mof'
                         Filter               = [scriptblock]::Create($filterString)
                         RandomWait           = $true
-                        BuildOutput          = $BuildOutput
+                        BuildOutput          = $buildOutput
                         ResourcesFolder      = $ResourcesFolder
                         ConfigDataFolder     = $ConfigDataFolder
                         ConfigurationsFolder = $ConfigurationsFolder
@@ -300,10 +306,10 @@ task Download_All_Dependencies -if ($DownloadResourcesAndConfigurations -or $Tas
 $configurationPath = Join-Path -Path $ProjectPath -ChildPath $ConfigurationsFolder
 $resourcePath = Join-Path -Path $ProjectPath -ChildPath $ResourcesFolder
 $configDataPath = Join-Path -Path $ProjectPath -ChildPath $ConfigDataFolder
-$testPath = Join-Path -Path $BuildRoot -ChildPath $TestFolder
+$testsPath = Join-Path -Path $ProjectPath -ChildPath $TestFolder
 
 task Download_DSC_Resources {
-    $PSDependResourceDefinition = '.\PSDepend.DSC_resources.psd1'
+    $PSDependResourceDefinition = "$ProjectPath\PSDepend.DSC_Resources.psd1"
     if (Test-Path $PSDependResourceDefinition)
     {
         Invoke-PSDepend -Path $PSDependResourceDefinition -Confirm:$false -Target $resourcePath
@@ -311,10 +317,10 @@ task Download_DSC_Resources {
 }
 
 task Download_DSC_Configurations {
-    $PSDependConfigurationDefinition = '.\PSDepend.DSC_configurations.psd1'
+    $PSDependConfigurationDefinition = "$ProjectPath\PSDepend.DSC_Configurations.psd1"
     if (Test-Path $PSDependConfigurationDefinition)
     {
-        Write-Build Green 'Pull dependencies from PSDepend.DSC_configurations.psd1'
+        Write-Build Green 'Pull dependencies from PSDepend.DSC_Configurations.psd1'
         Invoke-PSDepend -Path $PSDependConfigurationDefinition -Confirm:$false -Target $configurationPath
     }
 }
@@ -328,7 +334,7 @@ task Clean_DSC_Configurations_Folder {
 }
 
 task Zip_Modules_For_Pull_Server {
-    if (!([System.IO.Path]::IsPathRooted($BuildOutput)))
+    if (!([System.IO.Path]::IsPathRooted($buildOutput)))
     {
         $BuildOutput = Join-Path $PSScriptRoot -ChildPath $BuildOutput
     }
@@ -338,9 +344,9 @@ task Zip_Modules_For_Pull_Server {
 }
 
 task Test_ConfigData {
-    if (!(Test-Path -Path $testPath))
+    if (!(Test-Path -Path $testsPath))
     {
-        Write-Build Yellow "Path for tests '$testPath' does not exist"
+        Write-Build Yellow "Path for tests '$testsPath' does not exist"
         return
     }
     if (!([System.IO.Path]::IsPathRooted($BuildOutput)))
@@ -348,7 +354,7 @@ task Test_ConfigData {
         $BuildOutput = Join-Path -Path $PSScriptRoot -ChildPath $BuildOutput
     }
     $testResultsPath = Join-Path -Path $BuildOutput -ChildPath TestResults.xml
-    $testResults = Invoke-Pester -Script $testPath -PassThru -OutputFile $testResultsPath -OutputFormat NUnitXml
+    $testResults = Invoke-Pester -Script $testsPath -PassThru -OutputFile $testResultsPath -OutputFormat NUnitXml
 
     assert ($testResults.FailedCount -eq 0)
 }

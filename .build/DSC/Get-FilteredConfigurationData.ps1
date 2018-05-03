@@ -9,21 +9,14 @@ function Get-FilteredConfigurationData {
         $Datum = $(Get-variable Datum -ValueOnly -ErrorAction Stop)
     )
 
-    $AllNodes = @($Datum.AllNodes.($Environment).PSObject.Properties.Foreach{
-        $Node = $Datum.AllNodes.($Environment).($_.Name)
-        $Node['Environment'] = $Environment
-        if(!$Node.contains('Name')) {
-            $Null = $Node.Add('Name',$_.Name)
-        }
-        (@{} + $Node)
-    })
-
-    if($Filter.ToString() -ne ([System.Management.Automation.ScriptBlock]::Create({})).ToString()){
-        $AllNodes = [System.Collections.Hashtable[]]$AllNodes.Where($Filter)
+    $allNodes = Get-DatumNodesRecursive -Nodes $Datum.AllNodes.$Environment -Depth 20
+    
+    if($Filter.ToString() -ne ([System.Management.Automation.ScriptBlock]::Create({})).ToString()) {
+        $allNodes = [System.Collections.Hashtable[]]$allNodes.Where($Filter)
     }
 
     return @{
-        AllNodes = $AllNodes
+        AllNodes = $allNodes
         Datum = $Datum
     }
 }

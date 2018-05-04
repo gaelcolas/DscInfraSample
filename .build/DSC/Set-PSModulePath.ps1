@@ -11,8 +11,8 @@ function Set-PSModulePath {
         Remove-Module -Force PSDesiredStateConfiguration
     }
 
-    $Env:PSModulePath = Join-Path $PShome 'modules'
-    Get-Module | Where-Object {$_.Name -notin $ModuleToLeaveLoaded} | Remove-Module -Force
+    $Env:PSModulePath = Join-Path -Path $PShome -ChildPath Modules
+    Get-Module | Where-Object { $_.Name -notin $ModuleToLeaveLoaded } | Remove-Module -Force
 
     $PathsToSet.Foreach{
         if($_ -notin ($Env:PSModulePath -split ';')) {

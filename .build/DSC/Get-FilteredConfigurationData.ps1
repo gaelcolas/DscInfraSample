@@ -9,7 +9,7 @@ function Get-FilteredConfigurationData {
         $Datum = $(Get-variable Datum -ValueOnly -ErrorAction Stop)
     )
 
-    $allNodes = Get-DatumNodesRecursive -Nodes $Datum.AllNodes.$Environment -Depth 20
+    $allNodes = @(Get-DatumNodesRecursive -Nodes $Datum.AllNodes.$Environment -Depth 20)
     
     if($Filter.ToString() -ne ([System.Management.Automation.ScriptBlock]::Create({})).ToString()) {
         $allNodes = [System.Collections.Hashtable[]]$allNodes.Where($Filter)

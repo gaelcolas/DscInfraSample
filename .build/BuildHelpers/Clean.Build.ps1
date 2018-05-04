@@ -18,8 +18,8 @@ task Clean_BuildOutput {
     }
     if (Test-Path $BuildOutput) 
     {
-        "Removing $BuildOutput\*"
-        Get-ChildItem -Path .\BuildOutput\ -Exclude Modules, README.md | Remove-Item -Force -Recurse
+        Write-Build Green "Removing $BuildOutput\*"
+        Get-ChildItem -Path $BuildOutput -Exclude Modules, README.md | Remove-Item -Force -Recurse
     }
 }
 
@@ -29,6 +29,6 @@ task Clean_Module {
     {
         $BuildOutput = Join-Path -Path $ProjectPath.FullName -ChildPath $BuildOutput
     }
-    "Removing $BuildOutput\*"
-    Get-ChildItem -Path .\BuildOutput\ | Remove-Item -Force -Recurse -Verbose -ErrorAction Stop
+    Write-Build Green "Removing $BuildOutput\*"
+    Get-ChildItem -Path $BuildOutput | Remove-Item -Force -Recurse -Verbose -ErrorAction Stop
 }

@@ -1,6 +1,6 @@
 param (
     [System.IO.DirectoryInfo]
-    $ProjectPath = (property ProjectPath $ProjectPath),
+    $ProjectPath = (property ProjectPath $BuildRoot),
 
     [String]
     $BuildOutput = (property BuildOutput 'C:\BuildOutput'),
@@ -18,8 +18,8 @@ task Clean_BuildOutput {
     }
     if (Test-Path $BuildOutput) 
     {
-        Write-Build Green "Removing $BuildOutput\*"
-        Get-ChildItem -Path $BuildOutput -Exclude Modules, README.md | Remove-Item -Force -Recurse
+        "Removing $BuildOutput\*"
+        Get-ChildItem -Path .\BuildOutput\ -Exclude Modules, README.md | Remove-Item -Force -Recurse
     }
 }
 
@@ -29,6 +29,6 @@ task Clean_Module {
     {
         $BuildOutput = Join-Path -Path $ProjectPath.FullName -ChildPath $BuildOutput
     }
-    Write-Build Green "Removing $BuildOutput\*"
-    Get-ChildItem -Path $BuildOutput | Remove-Item -Force -Recurse -Verbose -ErrorAction Stop
+    "Removing $BuildOutput\*"
+    Get-ChildItem -Path .\BuildOutput\ | Remove-Item -Force -Recurse -Verbose -ErrorAction Stop
 }

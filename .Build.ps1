@@ -218,7 +218,7 @@ if ($MyInvocation.ScriptName -notlike '*Invoke-Build.ps1')
     if ($ResolveDependency -or $PSBoundParameters['ResolveDependency'])
     {
         $PSBoundParameters.Remove('ResolveDependency')
-        $PSBoundParameters.Add('DownloadResourcesAndConfigurations', $true)
+        $PSBoundParameters['DownloadResourcesAndConfigurations'] = $true
     }
 
     if ($Help)
@@ -276,8 +276,6 @@ if ($TaskHeader)
     Set-BuildHeader $TaskHeader
 }
 
-task Download_All_Dependencies -if ($DownloadResourcesAndConfigurations -or $Tasks -contains 'Download_All_Dependencies') Download_DSC_Configurations, Download_DSC_Resources -Before PSModulePath_BuildModules
-
 if ($MofCompilationTaskCount)
 {
     task . Clean_BuildOutput, 
@@ -302,6 +300,8 @@ else
     #Zip_Modules_For_Pull_Server
     #Deployment
 }
+
+task Download_All_Dependencies -if ($DownloadResourcesAndConfigurations -or $Tasks -contains 'Download_All_Dependencies') Download_DSC_Configurations, Download_DSC_Resources -Before PSModulePath_BuildModules
     
 $configurationPath = Join-Path -Path $ProjectPath -ChildPath $ConfigurationsFolder
 $resourcePath = Join-Path -Path $ProjectPath -ChildPath $ResourcesFolder

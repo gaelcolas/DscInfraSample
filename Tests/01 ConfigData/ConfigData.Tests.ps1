@@ -1,72 +1,72 @@
 $here = $PSScriptRoot
 
-$DatumDefinitionFile = Join-Path $here ..\..\DSC_ConfigData\Datum.yml
-$NodeDefinitions = Get-ChildItem $here\..\..\DSC_ConfigData\AllNodes -Recurse -Include *.yml
-$Environments = (Get-ChildItem $here\..\..\DSC_ConfigData\AllNodes -Directory).BaseName
-$RoleDefinitions = Get-ChildItem $here\..\..\DSC_ConfigData\Roles -Recurse -Include *.yml
-$Datum = New-DatumStructure -DefinitionFile $DatumDefinitionFile
-$ConfigurationData = Get-FilteredConfigurationData -Environment $Environment -Datum $Datum
+$datumDefinitionFile = Join-Path $here ..\..\DSC_ConfigData\Datum.yml
+$nodeDefinitions = Get-ChildItem $here\..\..\DSC_ConfigData\AllNodes -Recurse -Include *.yml
+$environments = (Get-ChildItem $here\..\..\DSC_ConfigData\AllNodes -Directory).BaseName
+$roleDefinitions = Get-ChildItem $here\..\..\DSC_ConfigData\Roles -Recurse -Include *.yml
+$datum = New-DatumStructure -DefinitionFile $datumDefinitionFile
+$configurationData = Get-FilteredConfigurationData -Environment $environment -Datum $datum
 
-$NodeNames = [System.Collections.ArrayList]::new()
+$nodeNames = [System.Collections.ArrayList]::new()
 
 Describe 'Datum Tree Definition' {
     It 'Exists in DSC_ConfigData Folder' {
-        Test-Path $DatumDefinitionFile | Should -Be $true
+        Test-Path $datumDefinitionFile | Should -Be $true
     }
 
-    $DatumYamlContent = Get-Content $DatumDefinitionFile -Raw
+    $datumYamlContent = Get-Content $datumDefinitionFile -Raw
     It 'is Valid Yaml' {
-        {$DatumYamlContent | ConvertFrom-Yaml } | Should -Not -Throw
+        { $datumYamlContent | ConvertFrom-Yaml } | Should -Not -Throw
     }
 
 }
 
 Describe 'Node Definition Files' {
-    $NodeDefinitions.ForEach{
+    $nodeDefinitions.ForEach{
         # A Node cannot be empty
-        $Content = Get-Content -raw $_
+        $content = Get-Content -Path $_ -Raw
         
         if($_.BaseName -ne 'AllNodes') {
             It "$($_.BaseName) Should not be duplicated" {
-                $NodeNames -contains $_.BaseName | Should -Be $false
+                $nodeNames -contains $_.BaseName | Should -Be $false
             }
         }
         
-        $Null = $NodeNames.Add($_.BaseName)
+        $null = $nodeNames.Add($_.BaseName)
         
         It "$($_.BaseName) is not Empty" {
-            $Content | Should -Not -BeNullOrEmpty
+            $content | Should -Not -BeNullOrEmpty
         }
 
         It "$($_.Name) has valid yaml" {
-                { $Object = $Content | ConvertFrom-Yaml } | Should -Not -Throw
+            { $object = $content | ConvertFrom-Yaml } | Should -Not -Throw
         }
     }
 }
 
 
 Describe 'Roles Definition Files' {
-    $RoleDefinitions.Foreach{
+    $roleDefinitions.Foreach{
         # A role can be Empty
 
-        $Content = Get-Content -raw $_
-        if($Content) {
+        $content = Get-Content -Path $_ -Raw
+        if($content) {
             It "$($_.BaseName) has valid yaml" {
-                { $null = $Content | ConvertFrom-Yaml } | Should -Not -Throw
+                { $null = $content | ConvertFrom-Yaml } | Should -Not -Throw
             }
         }
     }
 }
 
 Describe 'Role Composition' {
-    Foreach($Environment in $Environments) {
-        Context "Nodes for environment $Environment" {
+    Foreach($environment in $environments) {
+        Context "Nodes for environment $environment" {
             
-            Foreach ($Node in $ConfigurationData.AllNodes) {
-                It "$($Node.Name) has a valid Configurations Setting (!`$null)" {
-                    {Lookup Configurations -Node $Node -DatumTree $Datum } | Should -Not -Throw
+            Foreach ($node in $configurationData.AllNodes) {
+                It "$($node.Name) has a valid Configurations Setting (!`$null)" {
+                    {Lookup Configurations -Node $node -DatumTree $datum } | Should -Not -Throw
                 }
             }
         }
     }
-} 
+}

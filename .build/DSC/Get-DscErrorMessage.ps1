@@ -1,34 +1,39 @@
-function Get-DscErrorMessage
-{
-    param(
-        [Parameter(Mandatory)]
-        [System.Exception]$Exception
+function Get-DscErrorMessage {
+    Param(
+        [System.Exception]
+        $Exception
     )
 
-    switch ($Exception)
-    {
-        { $_.ToString() -match "Unable to find repository 'PSGallery" }
-        {
+    switch ($Exception) {
+        { $_ -is [System.Management.Automation.ItemNotFoundException] } {
+            #can be ignored, very likely caused by Get-Item within the PSDesiredStateConfiguration module
+            break
+        }
+        { $_.Message -match "Unable to find repository 'PSGallery" } {
             'Error in Package Management'
+            break
         }
         
-        { $_.ToString() -match 'A second CIM class definition'}
-        {
+        { $_.Message -match 'A second CIM class definition'} {
             # This happens when several versions of same module are available. 
             # Mainly a problem when when $Env:PSModulePath is polluted or 
             # DSC_Resources or DSC_Configuration are not clean
-            'A second CIM class definition exists, maybe a module exists twice and no explicit module version is specified'
+            'Multiple version of the same module exist'
+            break
         }
-        { $_.ToString() -match ([regex]::Escape("Cannot find path 'HKLM:\SOFTWARE\Microsoft\Powershell\3\DSC'")) }
-        {
-            if ($_.InvocationInfo.PositionMessage -match 'PSDscAllowDomainUser')
-            {
+        { $_.Message -match ([regex]::Escape("Cannot find path 'HKLM:\SOFTWARE\Microsoft\Powershell\3\DSC'")) } {
+            if ($_.InvocationInfo.PositionMessage -match 'PSDscAllowDomainUser') {
                 # This tend to be repeated for all nodes even if only 1 is affected
-                'Credentials are used and PSDscAllowDomainUser is not set'
+                'Domain user credentials are used and PSDscAllowDomainUser is not set'
+                break
             }
-            else
-            {
-                'Plain text passwords are used and PSDscAllowPlainTextPassword is not set'
+            elseif ($_.InvocationInfo.PositionMessage -match 'PSDscAllowPlainTextPassword') {
+                "It is not recommended to use plain text password. Use PSDscAllowPlainTextPassword = `$false"
+                break
+            }
+            else {
+                #can be ignored
+                break
             }
         }
     }

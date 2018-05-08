@@ -12,11 +12,11 @@ function Set-PSModulePath {
     }
 
     $Env:PSModulePath = Join-Path -Path $PShome -ChildPath Modules
-    Get-Module | Where-Object {$_.Name -notin $ModuleToLeaveLoaded} | Remove-Module -Force
+    Get-Module | Where-Object { $_.Name -notin $ModuleToLeaveLoaded } | Remove-Module -Force
 
     $PathsToSet.Foreach{
-        if($_ -notin ($Env:PSModulePath -split ';')) {
-            $Env:PSModulePath = $_ + ';' + $Env:PSModulePath
+        if ($_ -notin ($env:PSModulePath -split ';')) {
+            $env:PSModulePath = "$_;$($Env:PSModulePath)"
         }
     }
 }

@@ -93,7 +93,10 @@ task Compile_Root_Configuration {
     catch 
     {
         Write-Build Red "ERROR OCCURED DURING COMPILATION: $($_.Exception.Message)"
-        Write-Build Red ($Error[0..2] | Out-String)
+        $relevantErrors = $Error | Where-Object {
+            $_.Exception -isnot [System.Management.Automation.ItemNotFoundException]
+        }
+        Write-Build Red ($relevantErrors[0..2] | Out-String)
     }
 }
 

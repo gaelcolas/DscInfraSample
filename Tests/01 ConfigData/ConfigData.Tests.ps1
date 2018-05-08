@@ -62,7 +62,7 @@ Describe 'Role Composition' {
     Foreach($environment in $environments) {
         Context "Nodes for environment $environment" {
             
-            Foreach ($node in $configurationData.AllNodes) {
+            Foreach ($node in ($configurationData.AllNodes | Where-Object NodeName -ne *)) {
                 It "$($node.Name) has a valid Configurations Setting (!`$null)" {
                     {Lookup Configurations -Node $node -DatumTree $datum } | Should -Not -Throw
                 }

@@ -126,7 +126,9 @@ task Compile_Datum_Rsop {
     }
 
     Write-Build Green "Generating RSOP output for $($configurationData.AllNodes.Count) nodes"
-    $configurationData.AllNodes.Foreach{
+    $configurationData.AllNodes |
+    Where-Object Name -ne * |
+    ForEach-Object {
         $nodeRSOP = Get-DatumRsop -Datum $datum -AllNodes ([ordered]@{} + $_)
         $nodeRSOP | Convertto-Yaml -OutFile (Join-Path -Path $rsopOutputPathVersion -ChildPath "$($_.Name).yml") -Force
     }

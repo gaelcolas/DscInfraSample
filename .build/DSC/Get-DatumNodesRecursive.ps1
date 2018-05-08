@@ -15,7 +15,12 @@ function Get-DatumNodesRecursive
                     $newNode = $_."$propertyName"
                     if ($newNode -is [System.Collections.IDictionary]) {
                         if (!$newNode.Contains('Name')) {
-                            $newNode.Add('Name', $propertyName)
+                            if ($propertyName -eq 'AllNodes') {
+                                $newNode.Add('Name', '*')
+                            }
+                            else {
+                                $newNode.Add('Name', $propertyName)
+                            }
                         }
                         
                         [hashtable]$newNode

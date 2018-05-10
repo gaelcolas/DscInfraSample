@@ -17,8 +17,6 @@
     Pester                       = 'latest'
     PSScriptAnalyzer             = 'latest'
     PSDeploy                     = 'latest'
-    xPSDesiredStateConfiguration = 'latest'
-    xDscResourceDesigner = 'latest'
     DscBuildHelpers = 'latest'
     Datum = 'latest'
     'powershell-yaml' = 'latest'

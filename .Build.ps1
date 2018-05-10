@@ -87,103 +87,6 @@ param (
     }
 )
 
-function Split-Array
-{
-    param(
-        [Parameter(Mandatory)]
-        [System.Collections.IEnumerable]$List,
-
-        [Parameter(Mandatory, ParameterSetName = 'ChunkSize')]
-        [int]$ChunkSize,
-        
-        [Parameter(Mandatory, ParameterSetName = 'ChunkCount')]
-        [int]$ChunkCount
-    )
-    $aggregateList = @()
-    
-    if ($ChunkCount)
-    {
-        $ChunkSize = [Math]::Ceiling($List.Count / $ChunkCount)
-    }
-
-    $blocks = [Math]::Floor($List.Count / $ChunkSize)
-    $leftOver = $List.Count % $ChunkSize
-    for ($i = 0; $i -lt $blocks; $i++)
-    {
-        $end = $ChunkSize * ($i + 1) - 1
-
-        $aggregateList += @(, $List[$start..$end])
-        $start = $end + 1
-    }    
-    if ($leftOver -gt 0)
-    {
-        $aggregateList += @(, $List[$start..($end + $leftOver)])
-    }
-
-    , $aggregateList    
-}
-function Resolve-Dependency
-{
-    [CmdletBinding()]
-    param()
-
-    Write-Host "Downloading dependencies, this may take a while" -ForegroundColor Green
-    if (!(Get-PackageProvider -Name NuGet -ForceBootstrap))
-    {
-        $providerBootstrapParams = @{
-            Name           = 'nuget'
-            force          = $true
-            ForceBootstrap = $true
-        }
-        if ($PSBoundParameters.ContainsKey('Verbose'))
-        {
-            $providerBootstrapParams.Add('Verbose', $Verbose)
-        }
-        if ($GalleryProxy)
-        {
-            $providerBootstrapParams.Add('Proxy', $GalleryProxy)
-        }
-        $null = Install-PackageProvider @providerBootstrapParams
-        #Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
-    }
-        
-    Write-Verbose -Message 'BootStrapping PSDepend'
-    Write-Verbose -Message "Parameter $buildOutput"
-    $installPSDependParams = @{
-        Name    = 'PSDepend'
-        Path    = $buildModulesPath
-        Confirm = $false
-    }
-    if ($PSBoundParameters.ContainsKey('verbose'))
-    {
-        $installPSDependParams.Add('Verbose', $Verbose)
-    }
-    if ($GalleryRepository)
-    {
-        $installPSDependParams.Add('Repository', $GalleryRepository)
-    }
-    if ($GalleryProxy)
-    {
-        $installPSDependParams.Add('Proxy', $GalleryProxy)
-    }
-    if ($GalleryCredential)
-    {
-        $installPSDependParams.Add('ProxyCredential', $GalleryCredential)
-    }
-    Save-Module @installPSDependParams
-
-    $PSDependParams = @{
-        Force = $true
-        Path  = "$ProjectPath\PSDepend.Build.psd1"
-    }
-    if ($PSBoundParameters.ContainsKey('Verbose'))
-    {
-        $PSDependParams.add('Verbose', $Verbose)
-    }
-    Invoke-PSDepend @PSDependParams
-    Write-Verbose 'Project Bootstrapped, returning to Invoke-Build'
-}
-
 [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
 
 #cannot be a default parameter value due to https://github.com/PowerShell/PowerShell/issues/4688
@@ -208,8 +111,15 @@ if ($buildModulesPath -notin ($Env:PSModulePath -split ';'))
     $env:PSModulePath = "$buildModulesPath;$Env:PSModulePath"
 }
 
+if (-not (Get-Module -Name InvokeBuild -ListAvailable) -and -not $ResolveDependency)
+{
+    Write-Error "Requirements are missing. Please call the script again with the switch 'ResolveDependency'"
+    return
+}
+
 if ($ResolveDependency)
 {
+    . $PSScriptRoot/.build/BuildHelpers/Resolve-Dependency.ps1
     Resolve-Dependency
 }
 
@@ -265,12 +175,12 @@ if ($MyInvocation.ScriptName -notlike '*Invoke-Build.ps1')
     }
 }
 
-Get-ChildItem -Path "$PSScriptRoot/.build/" -Recurse -Include *.ps1 -Verbose |
+Get-ChildItem -Path "$PSScriptRoot/.build/" -Recurse -Include *.ps1 |
     ForEach-Object {
-    "Importing file $($_.BaseName)" | Write-Verbose
-    . $_.FullName 
+        Write-Verbose "Importing file $($_.BaseName)"
+    . $_.FullName
 }
-    
+
 if ($TaskHeader)
 {
     Set-BuildHeader $TaskHeader

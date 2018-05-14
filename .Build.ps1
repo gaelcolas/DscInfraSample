@@ -123,6 +123,15 @@ if ($ResolveDependency)
     Resolve-Dependency
 }
 
+Get-ChildItem -Path "$PSScriptRoot/.build/" -Recurse -Include *.ps1 |
+    ForEach-Object {
+        Write-Verbose "Importing file $($_.BaseName)"
+        try {
+            . $_.FullName
+        }
+        catch { }
+    }
+
 if ($MyInvocation.ScriptName -notlike '*Invoke-Build.ps1')
 {
     if ($ResolveDependency -or $PSBoundParameters['ResolveDependency'])
@@ -173,12 +182,6 @@ if ($MyInvocation.ScriptName -notlike '*Invoke-Build.ps1')
         }
         return
     }
-}
-
-Get-ChildItem -Path "$PSScriptRoot/.build/" -Recurse -Include *.ps1 |
-    ForEach-Object {
-        Write-Verbose "Importing file $($_.BaseName)"
-    . $_.FullName
 }
 
 if ($TaskHeader)

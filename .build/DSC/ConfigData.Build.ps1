@@ -77,6 +77,10 @@ task Load_Datum_ConfigData {
     $datumDefinitionFile = Join-Path -Resolve -Path $configDataPath -ChildPath 'Datum.yml'
     Write-Build Green "Loading Datum Definition from '$datumDefinitionFile'"
     $global:datum = New-DatumStructure -DefinitionFile $datumDefinitionFile
+    if (-not ($datum.AllNodes.$Environment))
+    {
+        Write-Error "No nodes found in the environment '$Environment'"
+    }
     Write-Build Green "Node count: $(($datum.AllNodes.$Environment | Get-Member -MemberType ScriptProperty | Measure-Object).Count)"
     
     Write-Build Green "Filter: $($Filter.ToString())"

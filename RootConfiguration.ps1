@@ -9,7 +9,6 @@ configuration "RootConfiguration"
     Import-DscResource -ModuleName PSDesiredStateConfiguration
     Import-DscResource -ModuleName SharedDscConfig -ModuleVersion 0.0.4
 
-
     $module = Get-Module PSDesiredStateConfiguration
     $null = & $module {param($tag,$Env) Set-PSTopConfigurationName "MOF_$($Env)_$($tag)"} "$BuildVersion",$Environment
 
@@ -41,14 +40,16 @@ configuration "RootConfiguration"
 
             if($dscError.Count -gt 0) {
                 $warningMessage = "    $($Node.Name) : $($Node.Role) ::> $_ "
-                Write-Host ($warningMessage + '.' * (55 - $warningMessage.Length) + 'FAILED') -ForeGroundColor Yellow
+                $n = [System.Math]::Max(1, 120 - $warningMessage.Length)
+                Write-Host "$warningMessage$('.' * $n)FAILED" -ForeGroundColor Yellow
                 $dscError.Foreach{
                     Write-Host "`t$message" -ForeGroundColor Yellow
                 }
             }
             else {
                 $okMessage = "    $($Node.Name) : $($Node.Role) ::> $_ "
-                Write-Host -ForeGroundColor Green ($okMessage + '.' * (55 -$okMessage.Length) + 'OK')
+                $n = [System.Math]::Max(1, 120 - $okMessage.Length)
+                Write-Host "$okMessage$('.' * $n)OK" -ForeGroundColor Green
             }
             $lastCount = $Error.Count
         }

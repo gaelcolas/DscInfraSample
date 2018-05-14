@@ -1,7 +1,7 @@
 @{
     #PSDepend dependencies
     
-    PSDependOptions = @{
+    PSDependOptions              = @{
         AddToPath  = $True
         Target     = 'DSC_Resources'
         Parameters = @{
@@ -10,7 +10,7 @@
         }
     }
 
-    chocolatey      = '0.0.48'
+    chocolatey                   = '0.0.48'
     xPSDesiredStateConfiguration = 'latest'
     xDscResourceDesigner         = 'latest'
 }

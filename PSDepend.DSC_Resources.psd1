@@ -9,7 +9,6 @@
             #Import = $True
         }
     }
-
     chocolatey                   = '0.0.58'
     xPSDesiredStateConfiguration = 'latest'
     xDscResourceDesigner         = 'latest'

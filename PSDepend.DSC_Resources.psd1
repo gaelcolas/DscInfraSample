@@ -11,6 +11,5 @@
     }
 
     chocolatey                   = '0.0.48'
-    xPSDesiredStateConfiguration = 'latest'
-    xDscResourceDesigner         = 'latest'
+    xPSDesiredStateConfiguration = '8.2.0.0'
 }

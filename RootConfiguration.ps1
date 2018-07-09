@@ -10,10 +10,10 @@ configuration "RootConfiguration"
     Import-DscResource -ModuleName SharedDscConfig -ModuleVersion 0.0.4
 
     $module = Get-Module PSDesiredStateConfiguration
-    $null = & $module {param($tag,$Env) Set-PSTopConfigurationName "MOF_$($Env)_$($tag)"} "$BuildVersion",$Environment
+    & $module {param($tag,$Env) $Script:PSTopConfigurationName = "MOF_$($Env)_$($tag)"} "$BuildVersion",$Environment
 
     node $ConfigurationData.AllNodes.NodeName {
-        Write-Host "`r`n$('-'*75)`r`n$($Node.Name) : $($Node.NodeName) : $(&$module { Get-PSTopConfigurationName })" -ForegroundColor Yellow
+        Write-Host "`r`n$('-'*75)`r`n$($Node.Name) : $($Node.NodeName) : $(& $module { $Script:PSTopConfigurationName })" -ForegroundColor Yellow
         $env:PSModulePath = $goodPSModulePath
         (Lookup 'Configurations').Foreach{
             $configurationName = $_

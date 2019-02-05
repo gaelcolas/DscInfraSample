@@ -1,13 +1,13 @@
 param (
     [System.IO.DirectoryInfo]
     $ProjectPath = (property ProjectPath $ProjectPath),
-    
+
     [String]
     $BuildOutput = (property BuildOutput 'BuildOutput'),
-    
+
     [String]
     $ResourcesFolder = (property ResourcesFolder 'DSC_Resources'),
-    
+
     [String]
     $ConfigurationsFolder = (property ConfigurationsFolder 'DSC_Configurations'),
 
@@ -54,7 +54,7 @@ task PSModulePath_BuildModules {
     $configurationPath = Join-Path -Path $ProjectPath -ChildPath $ConfigurationsFolder
     $resourcePath = Join-Path -Path $ProjectPath -ChildPath $ResourcesFolder
     $buildModulesPath = Join-Path -Path $BuildOutput -ChildPath Modules
-        
+
     Set-PSModulePath -ModuleToLeaveLoaded $ModuleToLeaveLoaded -PathsToSet @($configurationPath, $resourcePath, $buildModulesPath)
 }
 
@@ -67,10 +67,9 @@ task Load_Datum_ConfigData {
     $configurationPath = Join-Path -Path $ProjectPath -ChildPath $ConfigurationsFolder
     $resourcePath = Join-Path -Path $ProjectPath -ChildPath $ResourcesFolder
     $buildModulesPath = Join-Path -Path $BuildOutput -ChildPath Modules
-        
+
     Set-PSModulePath -ModuleToLeaveLoaded $ModuleToLeaveLoaded -PathsToSet @($configurationPath, $resourcePath, $buildModulesPath)
 
-    Import-Module -Name ProtectedData -Scope Global
     Import-Module -Name PowerShell-Yaml -Scope Global
     Import-Module -Name Datum -Scope Global
 
@@ -82,19 +81,19 @@ task Load_Datum_ConfigData {
         Write-Error "No nodes found in the environment '$Environment'"
     }
     Write-Build Green "Node count: $(($datum.AllNodes.$Environment | Get-Member -MemberType ScriptProperty | Measure-Object).Count)"
-    
+
     Write-Build Green "Filter: $($Filter.ToString())"
     $global:configurationData = Get-FilteredConfigurationData -Environment $Environment -Filter $Filter -Datum $datum
     Write-Build Green "Node count after applying filter: $($configurationData.AllNodes.Count)"
 }
 
 task Compile_Root_Configuration {
-    try 
+    try
     {
         $mofs = . (Join-Path -Path $ProjectPath -ChildPath 'RootConfiguration.ps1')
         Write-Build Green "Successfully compiled $($mofs.Count) MOF files"
     }
-    catch 
+    catch
     {
         Write-Build Red "ERROR OCCURED DURING COMPILATION: $($_.Exception.Message)"
         $relevantErrors = $Error | Where-Object {
@@ -105,6 +104,17 @@ task Compile_Root_Configuration {
 }
 
 task Compile_Root_Meta_Mof {
+    if (![System.IO.Path]::IsPathRooted($BuildOutput))
+    {
+        $BuildOutput = Join-Path -Path $ProjectPath -ChildPath $BuildOutput
+    }
+    $configDataPath = Join-Path -Path $ProjectPath -ChildPath $ConfigDataFolder
+    $configurationPath = Join-Path -Path $ProjectPath -ChildPath $ConfigurationsFolder
+    $resourcePath = Join-Path -Path $ProjectPath -ChildPath $ResourcesFolder
+    $buildModulesPath = Join-Path -Path $BuildOutput -ChildPath Modules
+
+    Set-PSModulePath -ModuleToLeaveLoaded $ModuleToLeaveLoaded -PathsToSet @($configurationPath, $resourcePath, $buildModulesPath)
+
     . (Join-Path -Path $ProjectPath -ChildPath 'RootMetaMof.ps1')
     $metaMofs = RootMetaMOF -ConfigurationData $configurationData -OutputPath (Join-Path -Path $BuildOutput -ChildPath 'MetaMof')
     Write-Build Green "Successfully compiled $($metaMofs.Count) MOF files"

@@ -1,6 +1,6 @@
 @{
     #PSDepend dependencies
-    
+
     PSDependOptions = @{
         AddToPath = $True
         Target = 'DSC_Resources'
@@ -10,5 +10,5 @@
         }
     }
 
-    chocolatey = '0.0.48'
+    chocolatey = '0.0.58'
 }

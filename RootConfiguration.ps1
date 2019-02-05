@@ -1,5 +1,6 @@
 Write-Warning "---------->> Starting Configuration"
 $BuildVersion = $Env:BuildVersion
+Import-Module DscBuildHelpers -Scope Global
 
 configuration "RootConfiguration"
 {
@@ -7,10 +8,10 @@ configuration "RootConfiguration"
 
     #That Module is a configuration, should be defined in Configuration.psd1
     Import-DscResource -ModuleName SharedDscConfig -ModuleVersion 0.0.4
-    Import-DscResource -ModuleName Chocolatey -ModuleVersion 0.0.48
+    Import-DscResource -ModuleName Chocolatey -ModuleVersion 0.0.58
 
     $module = Get-Module PSDesiredStateConfiguration
-    $null = & $module {param($tag) Set-PSTopConfigurationName "MOF_$($tag)"} "$BuildVersion"
+    $null = & $module {param($tag) $PSTopConfigurationName = "MOF_$($tag)" } "$BuildVersion"
 
     node $ConfigurationData.AllNodes.NodeName {
         $(Write-Warning "Processing Node $($Node.Name) : $($Node.nodeName)")
